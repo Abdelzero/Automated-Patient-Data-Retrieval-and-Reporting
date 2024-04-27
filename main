@@ -1,0 +1,2049 @@
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import ElementClickInterceptedException
+from selenium.common.exceptions import StaleElementReferenceException
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.keys import Keys
+from webdriver_manager.opera import OperaDriverManager
+from datetime import datetime, timedelta
+import pandas as pd
+from fpdf import FPDF
+import time
+import json
+import os
+import re
+import smtplib
+from email.message import EmailMessage
+from calendar import monthrange
+import traceback
+from etext import send_mms_via_email
+from fpdf.enums import XPos, YPos
+from PyPDF2 import PdfMerger
+
+sender_credentials = ("email_address", "your_one_time_password")
+chrome_options = webdriver.ChromeOptions()
+settings = {
+    "recentDestinations": [{
+        "id": "Save as PDF",
+        "origin": "local",
+        "account": "",
+    }],
+    "selectedDestinationId": "Save as PDF",
+    "version": 2
+}
+prefs = {
+    'printing.print_preview_sticky_settings.appState': json.dumps(settings)
+}
+chrome_options.add_experimental_option('prefs', prefs)
+# chrome_options.add_argument("--headless")
+# chrome_options.add_argument("--disable-gpu")
+chrome_options.add_argument('--kiosk-printing')
+user_name = os.environ['username']
+ser = f'C:\\Users\\{user_name}\\Downloads\\chromedriver.exe'
+os.chdir(f'C:\\Users\\{user_name}\\Downloads')
+today = pd.to_datetime('today')
+yearago = today - timedelta(days=365)
+threeyearago = today - timedelta(days=1095)
+now = datetime.now()
+dayvlu = now.weekday()
+if dayvlu == 3:
+    now += timedelta(days=2)
+if dayvlu == 4:
+    now += timedelta(days=2)
+now += timedelta(days=2)
+yearr = now.year
+montht = now.month
+num_days = monthrange(yearr, montht)[1]
+StartDate = f"{montht}/01/{yearr}"
+EndDate = f"{montht}/{num_days}/{yearr}"
+Magic = now.strftime("%m/%d/%Y")
+print(Magic)
+driver = webdriver.Chrome(options=chrome_options, service=Service(f'C:\\Users\\{user_name}\\Downloads\\chromedriver.exe'))
+driver.maximize_window()
+driver.implicitly_wait(10)
+def send_email_witherorr():
+    msg = EmailMessage()
+    msg['Subject'] = 'CALLINGLIST2 DIDNT RUN'
+    msg['From'] = 'your_email'
+    msg['To'] = 'your_email'
+    msg.set_content('An Error has Ocurred')
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+        smtp.login('your_email', 'your_one_time_password')
+        smtp.send_message(msg)
+sch3 = pd.DataFrame(columns=[
+   'ApptDate', 'ApptTime', 'Provider', 'OFFICE', 'PTNTNAME', 'DOB',
+   'PTNTACCT', 'Gender', 'Age', 'PROCEDURE', 'Mobile', 'Work', 'Home',
+   'ApptStage', 'ApptNote', 'Responsiblity', 'Primary Ins',
+   'Secondary Ins', 'Primary Status', 'Secondary Status', 'link',
+   'lastvisti', 'pt_page', 'Plan1', 'Address', 'Appt Name', 'Appt Link',
+   'BX_REQ', 'second_last_visit', 'emmalink', 'visits_link', 'meds_link',
+   'lastvisit2', 'Insurance_name', 'Insurance_date', 'BW_REPORT', 'BW_REQ',
+   'XRAY_REF', 'BX_REPORT', 'Culp Name', 'Culp Date', 'Biologic',
+   'Date Pres', 'need_bio', 'Pharmacy', 'Plan1_Policy', 'LASTNAME',
+   'FIRSTNAME', 'datefull', 'DateFull', 'dateofweek', 'day', 'month',
+   'year', 'ApptHour', 'ApptDay', 'ApptDate2', 'schTime1', 'schTime',
+   'Date Pres2', 'Difference', 'ballance', 'Check_Doc', 'BW_REQ_LINK',
+   'BW_REPORT_LINK', 'bx_report_link', 'XRAY_REF_LINK', 'Insurance_link', 'Pharmacy_number',
+    'pt_info', 'pt_info_date', 'pt_info_href', 'third_party', 'BW_REPORT_DATE', 'BW_REQ_DATE',
+    'id_name', 'id_date', 'id_href', 'error_message', 'third_party_message', 'plan_name',
+    'hmo_name', 'Ins_back', 'balance', 'ded_notes', 'primary_ins_edited', 'documented'
+
+])
+def list2():
+    driver.get("https://emr_link/ProviderLogin.action")
+    driver.find_element(By.NAME, "username").send_keys('your_username')
+    driver.find_element(By.NAME, "password").send_keys('your_password')
+    driver.find_element(By.NAME, "password").send_keys(Keys.ENTER)
+    driver.get("https://emr_link/practice/scheduler/front/SchedulerDHTMLX.action#/scheduler")
+    driver.find_element(By.CSS_SELECTOR, "input#schedulerDatePicker").clear()
+    driver.find_element(By.CSS_SELECTOR, "input#schedulerDatePicker").send_keys(Magic)
+    time.sleep(1)
+    driver.find_element(By.XPATH, "//button[contains(text(), 'EVERYTHING')]").click()
+    time.sleep(1)
+    driver.find_element(By.CSS_SELECTOR, "button#calendar-type-btn").click()
+    driver.find_element(By.CSS_SELECTOR, "a#Agenda_view").click()
+    time.sleep(5)
+    appt_list = driver.find_elements(By.CSS_SELECTOR,
+                                     "tr[class = 'dhx_grid_event scheduler-appointment-event']>td:nth-child(2)")
+    appt_list2 = driver.find_elements(By.CSS_SELECTOR,
+                                      "tr[class = 'dhx_grid_event scheduler-appointment-event']>td:nth-child(1)")
+    appt_list3 = driver.find_elements(By.CSS_SELECTOR,
+                                      "tr[class = 'dhx_grid_event scheduler-appointment-event']>td:nth-child(3)")
+    appt_list4 = driver.find_elements(By.CSS_SELECTOR,
+                                      "tr[class = 'dhx_grid_event scheduler-appointment-event']>td:nth-child(4)")
+    appt_list5 = driver.find_elements(By.CSS_SELECTOR,
+                                      "tr[class = 'dhx_grid_event scheduler-appointment-event']>td:nth-child(5)")
+    list_index = 0
+    for item in appt_list2:
+        ss = item.get_attribute("innerHTML")
+        dataa = [item.strip() for item in re.split(r"<br>|<strong>|</strong>", ss)]
+        sch3.loc[list_index, 'ApptDate'] = dataa[0]
+        sch3.loc[list_index, 'ApptTime'] = dataa[2]
+        sch3.loc[list_index, 'Provider'] = dataa[4]
+        sch3.loc[list_index, 'OFFICE'] = dataa[5]
+        list_index += 1
+    list_index = 0
+    for item in appt_list:
+        s = item.get_attribute("innerHTML")
+        data = [item.strip() for item in re.split(r"<br>|<strong>|</strong>", s)]
+        sch3.loc[list_index, 'PTNTNAME'] = data[1]
+        sch3.loc[list_index, 'DOB'] = data[3].split()[0]
+        sch3.loc[list_index, 'Age'] = int(re.compile('\((\d+)\)').search(data[3].split()[1])[1])
+        sch3.loc[list_index, 'Gender'] = data[3].split()[2]
+        sch3.loc[list_index, 'PTNTACCT'] = data[5].replace("MRN: ", '')
+        list_index += 1
+    list_index = 0
+    for item in appt_list3:
+        s3 = item.get_attribute("innerHTML")
+        data33 = [item.strip() for item in re.split(r"<br>|<strong>|</strong>", s3)]
+        sch3.loc[list_index, 'PROCEDURE'] = data33[1]
+        sch3.loc[list_index, 'ApptStage'] = data33[4]
+        sch3.loc[list_index, 'ApptNote'] = data33[-1]
+        list_index += 1
+    list_index = 0
+    for item in appt_list4:
+        s4 = item.get_attribute("innerHTML")
+        data34 = [item.strip() for item in re.split(r"<br>|<strong>|</strong>", s4)]
+        while ("" in data34):
+            data34.remove("")
+        m = ''
+        w = ''
+        h = ''
+        for ph in data34:
+            if "M" in ph:
+                m = ph[:-4]
+            elif "H" in ph:
+                h = ph[:-4]
+            elif "W" in ph:
+                w = ph[:-4]
+        sch3.loc[list_index, 'Mobile'] = m
+        sch3.loc[list_index, 'Work'] = w
+        sch3.loc[list_index, 'Home'] = h
+        list_index += 1
+    list_index = 0
+    for item in appt_list5:
+        p45 = item.get_attribute("innerHTML")
+        data336 = [item.strip() for item in re.split(r"<br>|<strong>|</strong>|</b>|</span>", p45)]
+        while ("" in data336):
+            data336.remove("")
+        for a in data336:
+            if 'Copay' in a:
+                data336.remove(a)
+        sch3.loc[list_index, 'Responsiblity'] = data336[0]
+        lnn = len(data336)
+        if lnn == 3 or lnn == 4:
+            sch3.loc[list_index, 'Primary Ins'] = data336[1].replace('<b>', '')
+            sch3.loc[list_index, 'Secondary Ins'] = ''
+            res = data336[2].replace('- <span style="color: green;">', '')
+            res = res.replace('- <span style="color: red;">', '')
+            res = res.replace('- ', '')
+            sch3.loc[list_index, 'Primary Status'] = res
+            sch3.loc[list_index, 'Secondary Status'] = ''
+        elif lnn == 6:
+            sch3.loc[list_index, 'Secondary Ins'] = data336[4].replace('<b>', '')
+            sch3.loc[list_index, 'Primary Ins'] = data336[1].replace('<b>', '')
+            res = data336[2].replace('- <span style="color: green;">', '')
+            res = res.replace('- <span style="color: red;">', '')
+            res = res.replace('- ', '')
+            res2 = data336[-1].replace('- <span style="color: green;">', '')
+            res2 = res2.replace('- <span style="color: red;">', '')
+            res2 = res2.replace('- ', '')
+            sch3.loc[list_index, 'Primary Status'] = res
+            sch3.loc[list_index, 'Secondary Status'] = res2
+        elif lnn == 1:
+            sch3.loc[list_index, 'Secondary Ins'] = ''
+            sch3.loc[list_index, 'Primary Ins'] = ''
+            sch3.loc[list_index, 'Primary Status'] = ''
+            sch3.loc[list_index, 'Secondary Status'] = ''
+        elif lnn == 2:
+            sch3.loc[list_index, 'Primary Ins'] = data336[1].replace('<b>', '')
+            sch3.loc[list_index, 'Secondary Ins'] = ''
+            sch3.loc[list_index, 'Primary Status'] = ''
+            sch3.loc[list_index, 'Secondary Status'] = ''
+        elif lnn == 5:
+            sch3.loc[list_index, 'Primary Ins'] = data336[1].replace('<b>', '')
+            sch3.loc[list_index, 'Secondary Ins'] = data336[-1].replace('<b>', '')
+            res = data336[2].replace('- <span style="color: green;">', '')
+            res = res.replace('- <span style="color: red;">', '')
+            res = res.replace('- ', '')
+            sch3.loc[list_index, 'Primary Status'] = res
+            sch3.loc[list_index, 'Secondary Status'] = ''
+        list_index +=1
+    if len(sch3) == 0:
+        driver.find_element(By.CSS_SELECTOR, "button#refreshApptsBtn").click()
+        time.sleep(2)
+        appt_list = driver.find_elements(By.CSS_SELECTOR,
+                                         "tr[class = 'dhx_grid_event scheduler-appointment-event']>td:nth-child(2)")
+        appt_list2 = driver.find_elements(By.CSS_SELECTOR,
+                                          "tr[class = 'dhx_grid_event scheduler-appointment-event']>td:nth-child(1)")
+        appt_list3 = driver.find_elements(By.CSS_SELECTOR,
+                                          "tr[class = 'dhx_grid_event scheduler-appointment-event']>td:nth-child(3)")
+        appt_list4 = driver.find_elements(By.CSS_SELECTOR,
+                                          "tr[class = 'dhx_grid_event scheduler-appointment-event']>td:nth-child(4)")
+        appt_list5 = driver.find_elements(By.CSS_SELECTOR,
+                                          "tr[class = 'dhx_grid_event scheduler-appointment-event']>td:nth-child(5)")
+        list_index = 0
+        for item in appt_list2:
+            ss = item.get_attribute("innerHTML")
+            dataa = [item.strip() for item in re.split(r"<br>|<strong>|</strong>", ss)]
+            sch3.loc[list_index, 'ApptDate'] = dataa[0]
+            sch3.loc[list_index, 'ApptTime'] = dataa[2]
+            sch3.loc[list_index, 'Provider'] = dataa[4]
+            sch3.loc[list_index, 'OFFICE'] = dataa[5]
+            list_index += 1
+        list_index = 0
+        for item in appt_list:
+            s = item.get_attribute("innerHTML")
+            data = [item.strip() for item in re.split(r"<br>|<strong>|</strong>", s)]
+            sch3.loc[list_index, 'PTNTNAME'] = data[1]
+            sch3.loc[list_index, 'DOB'] = data[3].split()[0]
+            sch3.loc[list_index, 'Age'] = int(re.compile('\((\d+)\)').search(data[3].split()[1])[1])
+            sch3.loc[list_index, 'Gender'] = data[3].split()[2]
+            sch3.loc[list_index, 'PTNTACCT'] = data[5].replace("MRN: ", '')
+            list_index += 1
+        list_index = 0
+        for item in appt_list3:
+            s3 = item.get_attribute("innerHTML")
+            data33 = [item.strip() for item in re.split(r"<br>|<strong>|</strong>", s3)]
+            sch3.loc[list_index, 'PROCEDURE'] = data33[1]
+            sch3.loc[list_index, 'ApptStage'] = data33[4]
+            sch3.loc[list_index, 'ApptNote'] = data33[-1]
+            list_index += 1
+        list_index = 0
+        for item in appt_list4:
+            s4 = item.get_attribute("innerHTML")
+            data34 = [item.strip() for item in re.split(r"<br>|<strong>|</strong>", s4)]
+            while ("" in data34):
+                data34.remove("")
+            m = ''
+            w = ''
+            h = ''
+            for ph in data34:
+                if "M" in ph:
+                    m = ph[:-4]
+                elif "H" in ph:
+                    h = ph[:-4]
+                elif "W" in ph:
+                    w = ph[:-4]
+            sch3.loc[list_index, 'Mobile'] = m
+            sch3.loc[list_index, 'Work'] = w
+            sch3.loc[list_index, 'Home'] = h
+            list_index += 1
+        list_index = 0
+        for item in appt_list5:
+            p45 = item.get_attribute("innerHTML")
+            data336 = [item.strip() for item in re.split(r"<br>|<strong>|</strong>|</b>|</span>", p45)]
+            while ("" in data336):
+                data336.remove("")
+            for a in data336:
+                if 'Copay' in a:
+                    data336.remove(a)
+            sch3.loc[list_index, 'Responsiblity'] = data336[0]
+            lnn = len(data336)
+            if lnn == 3 or lnn == 4:
+                sch3.loc[list_index, 'Primary Ins'] = data336[1].replace('<b>', '')
+                sch3.loc[list_index, 'Secondary Ins'] = ''
+                res = data336[2].replace('- <span style="color: green;">', '')
+                res = res.replace('- <span style="color: red;">', '')
+                res = res.replace('- ', '')
+                sch3.loc[list_index, 'Primary Status'] = res
+                sch3.loc[list_index, 'Secondary Status'] = ''
+            elif lnn == 6:
+                sch3.loc[list_index, 'Secondary Ins'] = data336[4].replace('<b>', '')
+                sch3.loc[list_index, 'Primary Ins'] = data336[1].replace('<b>', '')
+                res = data336[2].replace('- <span style="color: green;">', '')
+                res = res.replace('- <span style="color: red;">', '')
+                res = res.replace('- ', '')
+                res2 = data336[-1].replace('- <span style="color: green;">', '')
+                res2 = res2.replace('- <span style="color: red;">', '')
+                res2 = res2.replace('- ', '')
+                sch3.loc[list_index, 'Primary Status'] = res
+                sch3.loc[list_index, 'Secondary Status'] = res2
+            elif lnn == 1:
+                sch3.loc[list_index, 'Secondary Ins'] = ''
+                sch3.loc[list_index, 'Primary Ins'] = ''
+                sch3.loc[list_index, 'Primary Status'] = ''
+                sch3.loc[list_index, 'Secondary Status'] = ''
+            elif lnn == 2:
+                sch3.loc[list_index, 'Primary Ins'] = data336[1].replace('<b>', '')
+                sch3.loc[list_index, 'Secondary Ins'] = ''
+                sch3.loc[list_index, 'Primary Status'] = ''
+                sch3.loc[list_index, 'Secondary Status'] = ''
+            elif lnn == 5:
+                sch3.loc[list_index, 'Primary Ins'] = data336[1].replace('<b>', '')
+                sch3.loc[list_index, 'Secondary Ins'] = data336[-1].replace('<b>', '')
+                res = data336[2].replace('- <span style="color: green;">', '')
+                res = res.replace('- <span style="color: red;">', '')
+                res = res.replace('- ', '')
+                sch3.loc[list_index, 'Primary Status'] = res
+                sch3.loc[list_index, 'Secondary Status'] = ''
+            list_index += 1
+    sch3[['LASTNAME', 'FIRSTNAME']] = sch3['PTNTNAME'].str.split(',', expand=True)
+    for a, b_inx in zip(sch3['OFFICE'], sch3.index):
+        if a == 'Bayonne Khasak Dermatology':
+            sch3.loc[b_inx, 'OFFICE'] = 'Bayonne'
+        elif a == 'Dmitry Khasak MD Jersey City':
+            sch3.loc[b_inx, 'OFFICE'] = 'Jersey City'
+    sch3['datefull'] = sch3['ApptDate'] + ' ' + sch3['ApptTime']
+    sch3['DateFull'] = pd.to_datetime(sch3['datefull'], format='%m/%d/%Y %I:%M %p', errors='coerce')
+    dw_mapping = {0: 'Monday', 1: 'Tuesday', 2: 'Wednesday', 3: 'Thursday', 4: 'Friday',
+        5: 'Saturday', 6: 'Sunday'}
+    sch3['dateofweek'] = sch3['DateFull'].dt.weekday.map(dw_mapping)
+    sch3['DOB'] = pd.to_datetime(sch3['DOB'], format='%m/%d/%Y', errors='coerce')
+    sch3['day'] = sch3['DOB'].dt.day
+    sch3['month'] = sch3['DOB'].dt.month
+    sch3['year'] = sch3['DOB'].dt.year
+    sch3['DOB'] = sch3['DOB'].dt.strftime("%m/%d/%Y")
+    listdate1 = sch3.at[2, 'ApptDate']
+    listdate = listdate1.replace('/', '-')
+    sch3['ApptHour'] = sch3['DateFull'].dt.hour
+    sch3['ApptDay'] = sch3['DateFull'].dt.day
+    sch3['ApptDate2'] = sch3['DateFull'].dt.strftime("%Y-%m-%d")
+    sch3['ApptDay'] = sch3['DateFull'].dt.day
+    sch3['schTime1'] = sch3['DateFull'] + pd.Timedelta(hours=4)
+    sch3['schTime'] = sch3['schTime1'].dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+    url1 = 'https://websrv01.physician-to-go.net/proxy.cgi/apps/launcher/launch.htm?app='
+    url2 = '/proxy.cgi/apps/pdisplay/pdisplay.htm&query=caseno=0|rowid=AAATFUAAoAAAOd4AAP@main14|'
+    u = []
+    for z in sch3['PTNTACCT']:
+        u.append(url1 + url2 + f'acct={z}&title=Patient%20Display')
+    sch3['link'] = u
+list2()
+
+listdate1 = sch3['ApptDate'].value_counts().index[0]
+listdate = listdate1.replace('/', '-')
+def callingunited(d, output):
+    name = FPDF(orientation='L', unit='mm', format='A4')
+    name.add_page()
+    name.set_font("times", size=9)
+    y2 = 24
+    y3 = 0
+    y4 = 24
+    inx = 0
+    for off, date, tim, ln, fn, ph1, ph2, ph3, dob, notes, ins, add, pro, actnum, dayyy, yy1, p1p, gende, zz1, \
+        appt_name1, appt_link1, pt_page, bio_name1 in zip(
+            d['OFFICE'], d['ApptDate'], d['ApptTime'], d['LASTNAME'], d['FIRSTNAME'], d['Mobile'], d['Home'],
+            d['Home'], d['DOB'], d['ApptNote'], d['Plan1'], d['Address'], d['PROCEDURE'], d['PTNTACCT'], d['dateofweek'],
+            d['emmalink'], d['Plan1_Policy'], d['Gender'], d['link'], d['Appt Name'], d['Appt Link'],
+            d['pt_page'], d['Biologic']):
+        if bio_name1 == '':
+            name.set_text_color(0, 0, 0)
+        else:
+            name.set_text_color(0, 0, 160)
+        if y3 == 0:
+            y2 = 24
+            y4 = 24
+            name.cell(0, 14, '', 0, 1, "C")
+            name.line(10, 22, 285, 22)
+        inx += 1
+        name.cell(10, 5, f'{inx}', 0, 0, "C")
+        if 'Midtown' in off:
+            off = 'Park Ave'
+        name.cell(20, 5, f'{off}', 0, 0, "C")
+        name.cell(20, 5, f'{date}', 0, 0, "C", 0, pt_page)
+        name.cell(15, 5, f'{dayyy}', 0, 0, "C")
+        name.cell(20, 5, f'{tim}', 0, 0, "C")
+        name.cell(45, 5, f'{ln}, {fn} [{gende}]', 0, 0, "L", 0, yy1)
+        name.cell(40, 5, f'{ph1}', 0, 0, "C")
+        name.cell(20, 5, f'{dob}', 0, 0, "C")
+        name.cell(20, 5, '', 0, 0, "L")
+        name.cell(20, 5, '', 0, 0, "C")
+        name.cell(30, 5, f'{p1p}', 0, 1, 'C')
+        name.cell(10, 5, '', 0, 0)
+        name.set_font('times', size=7)
+        name.cell(20, 5, f"{appt_name1}", 0, 0, "C", 0, appt_link1)
+        name.set_font('times', size=9)
+        name.cell(55, 5, '', 0, 0)
+        name.cell(45, 5, f'{add}', 0, 0, "L", 0, zz1)
+        name.cell(40, 5, f'{ph2}', 0, 0, "C")
+        name.cell(20, 5, f'{pro}', 0, 0, "C")
+        name.cell(20, 5, '', 0, 0, "C")
+        name.cell(20, 5, '', 0, 1, "C")
+        if ph3 != '':
+            name.cell(130, 5, '', 0, 0)
+            name.cell(40, 5, f'{ph3}', 0, 1, "C")
+            y2 += 5
+            y4 += 5
+        if notes != '':
+            name.set_font('times', style='B', size=9)
+            name.set_text_color(0, 225, 0)
+            name.cell(30, 5, '', 0, 0)
+            name.cell(0, 5, f'{notes}', 0, 1, "L")
+            name.set_text_color(0, 0, 0)
+            name.set_font('times', size=9)
+            y2 += 5
+            y4 += 5
+
+        y4 += 10
+        name.line(20, 22, 20, y4)
+        name.line(10, 22, 10, y4)
+        name.line(285, 22, 285, y4)
+        y2 += 10
+        y3 += 1
+        name.line(10, y2, 285, y2)
+        name.set_text_color(0, 0, 0)
+        if y3 == 12:
+            name.add_page()
+            y3 = 0
+    output = output + '.pdf'
+    name.output(output)
+def send_email1(filename, ATT):
+    msg = EmailMessage()
+    msg['Subject'] = ATT
+    msg['From'] = 'your_email'
+    msg['To'] = 'dkdermvoice@gmail.com'
+    msg.set_content('FACE SHEETS')
+    with open(filename, 'rb') as f:
+        file_data = f.read()
+        file_name = f.name
+    msg.add_attachment(file_data, maintype='application', subtype='octet-stream', filename=file_name)
+
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+        smtp.login('your_email', 'your_one_time_password')
+        smtp.send_message(msg)
+def send_email_kevin(filename, ATT):
+    msg = EmailMessage()
+    msg['Subject'] = ATT
+    msg['From'] = 'your_email'
+    msg['To'] = 'martinezk1120@gmail.com'
+    msg.set_content('FACE SHEETS')
+    with open(filename, 'rb') as f:
+        file_data = f.read()
+        file_name = f.name
+    msg.add_attachment(file_data, maintype='application', subtype='octet-stream', filename=file_name)
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+        smtp.login('your_email', 'your_one_time_password')
+        smtp.send_message(msg)
+def send_email(filename, ATT):
+    msg = EmailMessage()
+    msg['Subject'] = ATT
+    msg['From'] = 'your_email'
+    msg['To'] = 'your_email'
+    msg.set_content('FACE SHEETS')
+    with open(filename, 'rb') as f:
+        file_data = f.read()
+        file_name = f.name
+    msg.add_attachment(file_data, maintype='application', subtype='octet-stream', filename=file_name)
+
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+        smtp.login('your_email', 'your_one_time_password')
+        smtp.send_message(msg)
+def Req_pdf(d):
+    class PDF(FPDF):
+        def header(self):
+            self.set_font('times', "B", 9)
+            self.set_text_color(0, 125, 0)
+            self.cell(10, 8, "", 1, 0, "C")
+            self.cell(25, 8, "Office", 1, 0, 'C')
+            self.cell(50, 8, "Patient Name", 1, 0, "C")
+            self.cell(10, 8, "Link", 1, 0, "C")
+            self.cell(30, 8, "DOB", 1, 0, 'C')
+            self.cell(30, 8, "Last Vist", 1, 0, "C")
+            self.cell(50, 8, "Requisition", 1, 0, "C")
+            self.cell(50, 8, "Report ", 1, 1, "C")
+
+    name = PDF(orientation='L', unit='mm', format='A4')
+    name.add_page()
+    name.set_font("times", size=9)
+    num = 0
+    for ln, fn, dob, off, mrn, rqnm, lv, Em, rep_nm, Appt_link1, bw_req_link, bw_rep_link, req_date, rep_date in \
+            zip(d['LASTNAME'], d['FIRSTNAME'], d['DOB'], d['OFFICE'], d['PTNTACCT'], d['BW_REQ'], d['lastvisti']
+                , d['emmalink'], d['BW_REPORT'], d['Appt Link'], d['BW_REQ_LINK'], d['BW_REPORT_LINK'],
+                d['BW_REQ_DATE'], d['BW_REPORT_DATE']):
+        if rqnm != '':
+            if rep_nm == '' or rep_date < req_date:
+                name.set_text_color(225, 0, 0)
+            num += 1
+            name.cell(10, 8, f'{num}', 1, 0, "C")
+            name.cell(25, 8, f'{off}', 1, 0, 'C', 0, Em)
+            name.cell(50, 8, f'{ln}, {fn}', 1, 0, "C")
+            name.cell(10, 8, "Link", 1, 0, "C", 0, Appt_link1)
+            name.cell(30, 8, f'{dob}', 1, 0, 'C')
+            name.cell(30, 8, f'{lv}', 1, 0, "C")
+            name.cell(50, 8, f'{rqnm}', 1, 0, "C", 0, bw_req_link)
+
+            name.cell(50, 8, f'{rep_nm}', 1, 1, "C", 0, bw_rep_link)
+            name.set_text_color(0, 0, 0)
+    for ln, fn, dob, off, mrn, rqnm, lv, Em, rep_nm, Appt_link1, xray_ref1, xray_link in \
+            zip(d['LASTNAME'], d['FIRSTNAME'], d['DOB'], d['OFFICE'], d['PTNTACCT'], d['BW_REQ'], d['lastvisti']
+                , d['emmalink'], d['BW_REPORT'], d['Appt Link'], d['XRAY_REF'], d['XRAY_REF_LINK']):
+        if xray_ref1 != '':
+            num += 1
+            name.cell(10, 8, f'{num}', 1, 0, "C")
+            name.cell(25, 8, f'{off}', 1, 0, 'C', 0, Em)
+            name.cell(50, 8, f'{ln}, {fn}', 1, 0, "C")
+            name.cell(10, 8, "Link", 1, 0, "C", 0, Appt_link1)
+            name.cell(30, 8, f'{dob}', 1, 0, 'C')
+            name.cell(30, 8, f'{lv}', 1, 0, "C")
+            name.cell(100, 8, f'{xray_ref1}', 1, 1, "L", 0, xray_link)
+    for ln, fn, dob, off, mrn, rqnm, lv, Em, rep_nm, Appt_link1, bx_link in \
+            zip(d['LASTNAME'], d['FIRSTNAME'], d['DOB'], d['OFFICE'], d['PTNTACCT'], d['BX_REQ'], d['lastvisti']
+                , d['emmalink'], d['BX_REPORT'], d['Appt Link'], d['bx_report_link']):
+        if rqnm != '':
+            if rep_nm == '':
+                name.set_text_color(225, 0, 0)
+            num += 1
+            name.cell(10, 8, f'{num}', 1, 0, "C")
+            name.cell(25, 8, f'{off}', 1, 0, 'C', 0, Em)
+            name.cell(50, 8, f'{ln}, {fn}', 1, 0, "C")
+            name.cell(10, 8, "Link", 1, 0, "C", 0, Appt_link1)
+            name.cell(30, 8, f'{dob}', 1, 0, 'C')
+            name.cell(30, 8, f'{lv}', 1, 0, "C")
+            name.cell(50, 8, f'{rqnm}', 1, 0, "C", 0)
+            name.cell(50, 8, f'{rep_nm}', 1, 1, "C", 0, bx_link)
+            name.set_text_color(0, 0, 0)
+    name.output(f"Req {listdate}.pdf")
+insurane_card = ['Insurance Card Front','Ins', 'INS', 'ins', 'inS', 'InS']
+pt_info = ['PATIENT INFO', 'PT INFO', 'PATIENT SIGN', 'PT COVID']
+def Coll_bio(listt):
+    num_down = len(listt)
+    for alinkm, inx, l_visit, bio_point in zip(listt['pt_page'], listt.index, listt['lastvisit2'],
+                                    listt['need_bio']):
+        if bio_point == True:
+            if pd.isna(l_visit) == False or l_visit > yearago :
+                driver.get(alinkm)
+                time.sleep(1)
+                driver.find_element(
+                    By.CSS_SELECTOR, "div[data-identifier = 'rx-history-tab']"
+                ).click()
+                time.sleep(2)
+                try:
+                    driver.find_element(By.XPATH, "//span[contains(text(), '100')]").click()
+                except:
+                    pass
+                time.sleep(3)
+                list_med = driver.find_elements(By.CSS_SELECTOR, "td[data-title-text = 'Rx']")
+                if len(list_med) > 0:
+                    herfs = driver.find_elements(By.CSS_SELECTOR, "td[data-title-text = 'Rx']>a")
+                    dates = driver.find_elements(By.CSS_SELECTOR, "td[data-title-text = 'Rx'] + td")
+                    biologics = ['Dupixent', 'Tremfya', 'Skyrizi', 'Taltz', 'Cosentyx', 'Stelara', 'Humira',
+                                 'Ilumya', 'Hadlima', 'Amjevita', 'Adalimumab']
+                    for a, ab, ac in zip(list_med, herfs, dates):
+                        if any(med in a.text for med in biologics):
+                            sch3.loc[inx, 'Biologic'] = a.text
+                            sch3.loc[inx, 'Date Pres'] = ac.text
+                            driver.get(ab.get_attribute('href'))
+                            time.sleep(2)
+                            med_status = re.compile('Rx status: (.+)').search(driver.find_element(
+                                By.CSS_SELECTOR, "td[aria-describedby = 'pr_id_3-table_status']"
+                            ).text)[1]
+                            if med_status != 'Printed' and med_status != 'Pending':
+                                sch3.loc[inx, 'Pharmacy'] = driver.find_element(
+                                    By.CSS_SELECTOR, "tr[id = '1']>td:nth-child(7)"
+                                ).text.split('\n')[3]
+                                try:
+                                    sch3.loc[inx, 'Pharmacy_number'] = re.compile('Primary: (.+)').search(driver.find_element(
+                                        By.CSS_SELECTOR, "tr[id = '1']>td:nth-child(7)"
+                                    ).text.split('\n')[-1])[1]
+                                except:
+                                    sch3.loc[inx, 'Pharmacy_number'] = \
+                                    re.compile('Primary: (.+)').search(driver.find_element(
+                                        By.CSS_SELECTOR, "tr[id = '1']>td:nth-child(7)"
+                                    ).text.split('\n')[-2])[1]
+                            else:
+                                sch3.loc[inx, 'Pharmacy'] = 'Rx was Printed'
+                            break
+        num_down -= 1
+        print(num_down)
+def Nicole_pdf(listt):
+        class PDF(FPDF):
+            def header(self):
+                self.set_font('times', "B", 9)
+                self.set_text_color(0, 125, 0)
+                self.cell(10, 8, "", 1, 0, "C", 0)
+                self.cell(25, 8, "Office", 1, 0, 'C')
+                self.cell(50, 8, "Patient Name", 1, 0, "C")
+                self.cell(20, 8, "DOB", 1, 0, 'C')
+                self.cell(20, 8, "Last Vist", 1, 0, "C")
+                self.cell(30, 8, "Biologic", 1, 0, "C")
+                self.cell(20, 8, "Date", 1, 0, "C")
+                self.cell(70, 8, "Pharmacy", 1, 0, "C")
+                self.cell(25, 8, "Ph Number", 1, 1, "C")
+        listt = listt.sort_values('Pharmacy')
+        name = PDF(orientation='L', unit='mm', format='A4')
+        name.add_page()
+        name.set_font("times", size=9)
+        num = 0
+        referal_list = sch3[
+            (sch3['Primary Ins'].isin(['United HealthCare of all states', 'UHC Community Plan New Jersey',
+                                       'UnitedHealthcare Community Plan', 'Emblem Health',
+                                       'Healthcare Partners IPA'])) |
+            (sch3['Secondary Ins'].isin(['United HealthCare of all states', 'UHC Community Plan New Jersey',
+                                         'UnitedHealthcare Community Plan', 'Emblem Health',
+                                         'Healthcare Partners IPA']))
+            ]
+        for off, time, date, ln, fn, dob, mrn, bio_nam, bio_phar, bio_dat, lv, Em, ph_num in zip(
+                listt['OFFICE'], listt['ApptTime'], listt['ApptDate'], listt['LASTNAME'], listt['FIRSTNAME'],
+                listt['DOB'], listt['PTNTACCT'], listt['Biologic'], listt['Pharmacy'], listt['Date Pres'],
+                listt['lastvisti'], listt['meds_link'], listt['Pharmacy_number']):
+            num += 1
+
+            if mrn in referal_list['PTNTACCT'].values:
+                name.set_text_color(0, 0, 160)
+            else:
+                name.set_text_color(0, 0, 0)
+            name.cell(10, 8, f'{num}', 1, 0, "C")
+            name.cell(25, 8, f'{off}', 1, 0, 'C', 0)
+            name.cell(50, 8, f'{ln}, {fn}', 1, 0, "C", 0, Em)
+            name.cell(20, 8, f'{dob}', 1, 0, 'C')
+            name.cell(20, 8, f'{lv}', 1, 0, "C")
+            try:
+                bio_nam_list = bio_nam.split()
+                bio_nam1 = bio_nam_list[0]
+            except:
+                bio_nam1 = bio_nam
+            name.cell(30, 8, f'{bio_nam1}', 1, 0, "C")
+            name.cell(20, 8, f'{bio_dat}', 1, 0, "C")
+            if len(bio_phar) > 29:
+                name.cell(70, 8, f'{bio_phar[:29]}', 1, 0, "L")
+            else:
+                name.cell(70, 8, f'{bio_phar}', 1, 0, "L")
+            if bio_phar != 'Rx was Printed':
+                name.cell(25, 8, f'{ph_num}', 1, 1, "L")
+            else:
+                name.cell(25, 8, '', 1, 1, "L")
+        name.output(f"Biologic_Total_{listdate}.pdf")
+def Culprit():
+    how_many = len(sch3)
+    driver = webdriver.Chrome(options=chrome_options,
+                              service=Service(f'C:\\Users\\{user_name}\\Downloads\\chromedriver.exe'))
+    driver.maximize_window()
+    driver.get("https://emr_link/ProviderLogin.action")
+    driver.find_element(By.NAME, "username").send_keys('your_username')
+    driver.find_element(By.NAME, "password").send_keys('your_password')
+    driver.find_element(By.NAME, "password").send_keys(Keys.ENTER)
+    time.sleep(3)
+    for a, a_inxed, thirdpary1, pt_info_date, hmo_1, primary_ins, id_name1, plan_a, locaiton_pre, \
+            mrn, plan1_profile, documented, error_message in zip(
+        sch3['Appt Link'], sch3.index, sch3['third_party'], sch3['pt_info_date'],
+        sch3['hmo_name'], sch3['Primary Ins'], sch3['id_name'], sch3['plan_name'],
+        sch3['OFFICE'], sch3['PTNTACCT'], sch3['Plan1'], sch3['documented'], sch3['error_message']
+    ):
+        try:
+            if documented != True:
+                driver.implicitly_wait(2)
+                driver.get(a)
+                time.sleep(3)
+                sch3.loc[a_inxed, 'Culp Date'] = driver.find_element(
+                    By.CSS_SELECTOR, "td[data-title-text = 'Date']"
+                ).text
+                sch3.loc[a_inxed, 'Culp Name'] = driver.find_element(
+                    By.CSS_SELECTOR, "td[data-title-text = 'User']"
+                ).text
+                message1 = 'DEMO: '
+                message2 = 'BENF: '
+                try:
+                    driver.find_element(By.CSS_SELECTOR, "span[class = 'text-alert bold ng-binding pull-right']")
+                    balance = [float(value.text.replace('$', '')) for value in driver.find_elements(
+                        By.CSS_SELECTOR, "span[class = 'text-alert bold ng-binding pull-right']"
+                    )]
+                except:
+                    balance = []
+                if len(balance) > 0:
+                    sch3.loc[a_inxed, 'ema_balance'] = sum(balance)
+                else:
+                    sch3.loc[a_inxed, 'ema_balance'] = 0
+                if pd.isna(pt_info_date) or pt_info_date < threeyearago:
+                    message1 += 'FULL PT INFO'
+                elif pt_info_date < yearago:
+                    message1 += '2 PT INFO'
+                if pd.isna(id_name1) or id_name1 == 'No ID':
+                    if len(message1) > 6:
+                        message1 += ', SCAN ID'
+                    else:
+                        message1 += 'SCAN ID'
+                if len(message1) == 6:
+                    message1 += 'READY'
+                if thirdpary1 == True:
+                    message2 += 'THIRD PARTY'
+                if hmo_1 != '':
+                    if hmo_1 == primary_ins and plan_a == 'PLAN A' and thirdpary1 == False:
+                        message2 += 'READY'
+                    else:
+                        if hmo_1 == 'No Data':
+                            message2 += 'PT HAVE MEDICAID BUT NO HMO'
+                        elif hmo_1 != primary_ins:
+                            message2 += f'PT HAVE NEW HMO: {hmo_1}'
+                        if plan_a == 'PLAN C' or plan_a == 'PLAN D':
+                            if len(message2) > 6:
+                                message2 += ', COLLECT COPAY'
+                            else:
+                                message2 += 'COLLECT COPAY'
+                if 'Ineligible' in error_message:
+                    message2 += error_message
+                if len(balance) != 0:
+                    if len(message2) > 6:
+                        message2 += ', CHECK BAL'
+                    else:
+                        message2 += 'CHECK BAL'
+                if plan1_profile == 'Unspecified' and primary_ins == '':
+                    message2 += 'CHECK IF SELF PAY'
+                if len(message2) == 6:
+                    message2 += 'CHECK IT!'
+                time.sleep(1)
+                appt_note_element = driver.find_element(By.CSS_SELECTOR, "textarea#apptNotes")
+                if f"{message1} | {message2}" not in appt_note_element.get_attribute('value'):
+                    appt_note_element.send_keys(Keys.PAGE_UP)
+                    appt_note_element.send_keys(f"({message1} | {message2})\n")
+                sch3.loc[a_inxed, 'demo_message'] = f"{message1} | {message2}"
+                driver.find_element(By.CSS_SELECTOR,
+                                    "a[class = 'link-button link-button-large ng-isolate-scope']").click()
+                driver.implicitly_wait(1)
+                try:
+                    driver.find_element(By.CSS_SELECTOR, 'button#primaryNotificationBtn').click()
+                except:
+                    pass
+                how_many -= 1
+                time.sleep(1)
+                print(how_many)
+                sch3.loc[a_inxed, 'documented'] = True
+        except:
+            try:
+                driver.find_element(By.CSS_SELECTOR, "div[class = 'modal-content']>div>button").click()
+            except:
+                pass
+    sch3['third_party_message'] = sch3['third_party_message'].fillna('')
+    njmmis = sch3[(sch3['OFFICE'].isin(['Jersey City', 'Bayonne'])) & (sch3['Primary Ins'].isin([
+        'Horizon New Jersey Health', 'Wellcare of New Jersey', 'UnitedHealthcare Community Plan',
+        'UHC Community Plan New Jersey', 'Amerigroup New Jersey',
+        'Aetna Better Health of New Jersey', 'Wellpoint'
+    ]))]
+def precheckers(listt):
+    office_group = listt.groupby('OFFICE')
+    for office_name, office_df2 in office_group:
+        njmmis_temp = office_df2[(office_df2['OFFICE'].isin(['Jersey City', 'Bayonne'])) & (sch3['Primary Ins'].isin([
+        'Horizon New Jersey Health', 'Wellcare of New Jersey', 'UnitedHealthcare Community Plan',
+        'UHC Community Plan New Jersey', 'Amerigroup New Jersey',
+        'Aetna Better Health of New Jersey'
+        ]))]
+        njmmis_temp['primary_ins_edited'] = ''
+        njmmis_temp['primary_ins_edited'] = njmmis_temp['Primary Ins'].map(payer_dict)
+        office_df3 = office_df2.drop(labels=njmmis_temp.index)
+        class PDF(FPDF):
+            def header(self):
+                self.set_font('times', 'B', 10)
+                self.set_text_color(0, 125, 0)
+                self.cell(0, 10, f'{office_name}: {listdate1}', new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='C')
+                self.cell(10, 10, '', border=1, new_x=XPos.RIGHT, new_y=YPos.TOP)
+                self.cell(50, 10, 'Patient Name', border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+                self.cell(25, 10, 'Patient DOB', border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+                self.cell(50, 10, 'Primary Insurance', border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+                self.cell(50, 10, 'Policy ID ', border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+                self.cell(20, 10, 'Status', border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+                self.cell(50, 10, 'Secondary Insurance', border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+                self.cell(20, 10, 'Status', border=1, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='C')
+        medpdf = PDF('L', 'mm', 'A4')
+        medpdf.add_page()
+        medpdf.set_font('times', size=10)
+        number = 0
+        for insurane_name, office_df in office_df3.groupby('Primary Ins'):
+            office_df['Plan1_Policy'] = office_df['Plan1_Policy'].astype(str)
+            office_df.sort_values('Plan1_Policy', inplace=True)
+            medpdf.cell(0, 10, f'{insurane_name}', border=0, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='C')
+            for pt_name, dob, ins1, policy1, status1, ins2, status2, pt_link12, appt_link12, ema_balance2 in zip(
+                    office_df['PTNTNAME'], office_df['DOB'], office_df['Plan1'], office_df['Plan1_Policy'], office_df['Primary Status'],
+                    office_df['Secondary Ins'], office_df['Secondary Status'], office_df['pt_page'], office_df['Appt Link'],
+                    office_df['ema_balance']
+            ):
+                number += 1
+                medpdf.cell(10, 10, str(number), border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C', link=appt_link12)
+                bal_message = ''
+                try:
+                    if ema_balance2 > 0:
+                        medpdf.set_text_color(255, 0, 0)
+                except:
+                    bal_message = "Couldn't Check Balance"
+                medpdf.cell(50, 10, pt_name, border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C', link=pt_link12)
+                medpdf.set_text_color(0, 0, 0)
+                medpdf.cell(25, 10, str(dob), border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+                ins1 = ins1.replace('Blue Cross Blue Shield of New Jersey - Horizon', 'BCBS Horizon')
+                ins1 = ins1.replace('Molina Healthcar of NY (fka Total Care NY)', 'Molina')
+                ins1 = ins1.replace('UMR - San Antonio (formerly Benefit Planners)', 'UMR')
+                ins1 = ins1.replace('Blue Cross Blue Shield of New York - Empire', 'BCBS Empire')
+                ins1 = ins1.replace('AARP Medicare Supplement/Fixed Indemnity by UHC', 'AARP')
+                ins1 = ins1.replace('UnitedHealthcare Student Resources', 'United Student Resources')
+                ins1 = ins1.replace('Amerihealth New Jersey - Non-HMO', 'Amerihealth')
+                medpdf.cell(50, 10, ins1, border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+                medpdf.cell(50, 10, str(policy1), border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+                if status1 == 'Active':
+                    medpdf.set_text_color(0, 125, 0)
+                elif status1 == 'Inactive':
+                    medpdf.set_text_color(255, 0, 0)
+                elif status1 == 'Unkown':
+                    medpdf.set_text_color(0, 0, 0)
+
+                medpdf.cell(20, 10, status1, border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+                medpdf.set_text_color(0, 0, 0)
+                ins2 = ins2.replace('Blue Cross Blue Shield of New Jersey - Horizon', 'BCBS Horizon')
+                ins2 = ins2.replace('Molina Healthcar of NY (fka Total Care NY)', 'Molina')
+                ins2 = ins2.replace('UMR - San Antonio (formerly Benefit Planners)', 'UMR')
+                ins2 = ins2.replace('Blue Cross Blue Shield of New York - Empire', 'BCBS Empire')
+                ins2 = ins2.replace('AARP Medicare Supplement/Fixed Indemnity by UHC', 'AARP')
+                ins2 = ins2.replace('UnitedHealthcare Student Resources', 'United Student Resources')
+                ins2 = ins2.replace('Amerihealth New Jersey - Non-HMO', 'Amerihealth')
+                medpdf.cell(50, 10, ins2, border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+                if status2 == 'Active':
+                    medpdf.set_text_color(0, 125, 0)
+                elif status2 == 'Inactive':
+                    medpdf.set_text_color(255, 0, 0)
+                elif status2 == 'Unkown':
+                    medpdf.set_text_color(0, 0, 0)
+                medpdf.cell(20, 10, status2, border=1, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='C')
+                medpdf.set_text_color(0, 0, 0)
+                if bal_message != '':
+                    medpdf.set_text_color(255, 0, 0)
+                    medpdf.cell(0, 10, bal_message, border=1, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='C')
+                medpdf.set_text_color(0, 0, 0)
+        medpdf.output(f"Not_medicaid_{office_name}.pdf")
+        class PDF(FPDF):
+            def header(self):
+                self.set_font('times', 'B', 12)
+                self.set_text_color(0, 125, 0)
+                self.cell(0, 10, f'Medicaid of New Jersey {office_name}: {listdate1}', new_x=XPos.LMARGIN,
+                          new_y=YPos.NEXT, align='C')
+                self.cell(25, 10, 'Appt', border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+                self.cell(60, 10, 'Name', border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+                self.cell(25, 10, 'DOB', border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+                self.cell(35, 10, 'Payer', border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+                self.cell(120, 10, 'Message', border=1, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='C')
+        nj_pdf = PDF('L', 'mm', 'A4')
+        nj_pdf.add_page()
+        nj_pdf.set_font('times', size=10)
+        for appt_date, pt_name, dob, payer3, payer2, errors, third_message, appt_link, pt_link, payer1 in zip(
+                njmmis_temp['ApptDate'], njmmis_temp['PTNTNAME'], njmmis_temp['DOB'], njmmis_temp['primary_ins_edited'],
+                njmmis_temp['hmo_name'], njmmis_temp['error_message'], njmmis_temp['third_party_message'],
+                njmmis_temp['Appt Link'], njmmis_temp['pt_page'], njmmis_temp['Primary Ins']
+        ):
+            if errors != '' or payer2 == 'No Data' or payer2 != payer1 or third_message not in [
+                'No Third Party Data', 'Dual Coverage'
+            ]:
+                nj_pdf.set_text_color(0, 0, 0)
+                newline_count = third_message.count('\n') + 1
+                if errors != '' and len(errors) > 80:
+                    newline_count = 2
+                nj_pdf.cell(25, 8 * newline_count, f"{appt_date}", border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C',
+                            link=appt_link)
+                nj_pdf.cell(60, 8 * newline_count, f"{pt_name}", border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C',
+                            link=pt_link)
+                nj_pdf.cell(25, 8 * newline_count, f"{dob}", border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+                nj_pdf.cell(35, 8 * newline_count, f"{payer3}", border=1, new_x=XPos.RIGHT, new_y=YPos.TOP, align='C')
+                if errors != '':
+                    nj_pdf.set_text_color(225, 0, 0)
+                    nj_pdf.multi_cell(120, 8, f"{errors}", border=1, new_x=XPos.LMARGIN,
+                                      new_y=YPos.NEXT, align='C')
+                else:
+                    message_final = ''
+                    message_final += third_message
+                    if payer2 == 'No Data':
+                        nj_pdf.set_text_color(225, 0, 0)
+                        message_final = 'PT HAVE MEDICAID BUT NO HMO'
+                    elif payer2 != payer1:
+                        nj_pdf.set_text_color(225, 0, 0)
+                        message_final += f', PT HAVE NEW HMO: {payer2}'
+                    nj_pdf.multi_cell(120, 8, f"{message_final}", border=1, new_x=XPos.LMARGIN, new_y=YPos.NEXT, align='C')
+        nj_pdf.output(f'Medicaid_{office_name}.pdf')
+        merger_prechecker = PdfMerger()
+        merger_prechecker.append(f'Medicaid_{office_name}.pdf'), merger_prechecker.append(f'Not_medicaid_{office_name}.pdf')
+        merger_prechecker.write(f"Pre_check_{office_name}_{listdate}.pdf")
+        merger_prechecker.close()
+        os.remove(f'Not_medicaid_{office_name}.pdf'), os.remove(f'Medicaid_{office_name}.pdf')
+        send_email1(f"Pre_check_{office_name}_{listdate}.pdf", f"Pre_check_{office_name}_{listdate1}")
+        send_email_kevin(f"Pre_check_{office_name}_{listdate}.pdf", f"Pre_check_{office_name}_{listdate1}")
+hmo_dict = {
+        'HORIZON NJ HEALTH': 'Horizon New Jersey Health',
+        'WELLPOINT NEW JERSEY INC. FORMERLY AMERIGROUP NJ INC.': 'Wellpoint',
+        'UNITEDHEALTHCARE': 'UnitedHealthcare Community Plan',
+        'AETNA BETTER HEALTH OF NEW JERSEY': 'Aetna Better Health of New Jersey',
+        'FIDELIS CARE FORMERLY WELLCARE': 'Wellcare of New Jersey',
+        'UNITEDHEALTHCARE DUAL COMPLETE ONE (HMO SNP)': 'United HealthCare of all states',
+        'AETNA ASSURE PREMIER PLUS (HMO SNP)': 'Aetna Better Health of New Jersey',
+        'HORIZON NJ TOTALCARE (HMO SNP)': 'Horizon New Jersey Health',
+        'WELLCARE LIBERTY (HMO SNP)': 'Wellcare of New Jersey',
+        'WELLPOINT FULL DUAL ADVANTAGE (HMO SNP)': 'Wellpoint'
+
+    }
+payer_dict = {
+        'Horizon New Jersey Health': 'Horizon NJ Health',
+        'Wellcare of New Jersey': 'WellCare',
+        'UnitedHealthcare Community Plan': 'United Medicaid',
+        'Amerigroup New Jersey': 'Wellpoint ',
+        'Aetna Better Health of New Jersey': 'Aetna Medicaid',
+        'UHC Community Plan New Jersey': 'United Medicaid'
+    }
+timeout = 60
+sch3['done'] = 'Not Done'
+#%% testing emalink3
+while True:
+    try:
+        how_many = len(sch3)
+        driver.get('https://emr_link/app/Patients.action')
+        for pt_account, inx, done_or, time2 in zip(sch3['PTNTACCT'], sch3.index, sch3['done'], sch3['DateFull']):
+            if done_or == 'Not Done':
+                wait = WebDriverWait(
+                    driver, 10, ignored_exceptions=[ElementClickInterceptedException, StaleElementReferenceException
+                    ])
+                start_time = time.time()
+                while True:
+                    try:
+                        driver.find_element(By.CSS_SELECTOR,
+                                            "ng-select[data-identifier='filterBy']>div>div>div>input").click()
+                        break
+                    except:
+                        # Check if the timeout has been reached
+                        if time.time() - start_time > timeout:
+                            driver.refresh()
+                            break  # Break the loop if timeout is reached
+                        else:
+                            # Wait for 0.5 seconds before trying again
+                            time.sleep(0.5)
+                            print('Waiting')
+                driver.find_element(By.CSS_SELECTOR, "ng-select[data-identifier = 'filterBy']>div>div>div>input").send_keys('MRN')
+                driver.find_element(By.CSS_SELECTOR, "ng-select[data-identifier = 'filterBy']>div>div>div>input").send_keys(Keys.ENTER)
+                driver.find_element(By.CSS_SELECTOR, "input[data-identifier = 'filterValue']").clear()
+                driver.find_element(By.CSS_SELECTOR, "input[data-identifier = 'filterValue']").send_keys(pt_account)
+                driver.find_element(By.CSS_SELECTOR, "button[data-identifier = 'save']").click()
+                time.sleep(1)
+                start_time = time.time()
+                while True:
+                    try:
+                        last_visit_text = driver.find_element(
+                            By.CSS_SELECTOR, "table[role = 'table']>tbody>tr>td:nth-child(9)"
+                        ).get_attribute("innerText")
+                        break
+                    except:
+                        if time.time() - start_time > timeout:
+                            driver.refresh()
+                            break  # Break the loop if timeout is reached
+                        else:
+                            driver.find_element(By.CSS_SELECTOR, "button[data-identifier = 'save']").click()
+                if last_visit_text != '':
+                        lv3 = datetime.strptime(last_visit_text, '%m/%d/%Y')
+                else:
+                    lv3 = ''
+                sch3.loc[inx, 'lastvisti'] = last_visit_text
+                wait.until(
+                    EC.element_to_be_clickable((
+                        By.CSS_SELECTOR, "table[role = 'table']>tbody>tr>td:nth-child(1)>span>a"
+                    ))
+                ).click()
+                time.sleep(1)
+                sch3.loc[inx, 'pt_page'] = driver.current_url
+                start_time = time.time()
+                while True:
+                    try:
+                        driver.find_element(
+                            By.XPATH, "//div[contains(@class, 'patient-header-expansion')]//div//div"
+                        ).click()
+                        break
+                    except:
+                        if time.time() - start_time > timeout:
+                            driver.refresh()
+                            break  # Break the loop if timeout is reached
+                        else:
+                            pass
+                try:
+                    time.sleep(1)
+                    sch3.loc[inx, 'Plan1'] = driver.find_element(
+                        By.CSS_SELECTOR, "span[ data-identifier = 'insurance-company-name']").text
+                    sch3.loc[inx, 'Plan1_Policy'] = driver.find_element(
+                        By.CSS_SELECTOR, "span[data-identifier = 'policy-number']").text
+                except:
+                    try:
+                        sch3.loc[inx, 'Plan1'] = driver.find_element(
+                            By.CSS_SELECTOR, "div[data-identifier = 'primary-active-insurance-policy']>div:nth-child(2)"
+                        ).text
+                        sch3.loc[inx, 'Plan1_Policy'] = ''
+                    except:
+                        pass
+                try:
+                    sch3.loc[inx, 'Address'] = driver.find_element(
+                        By.CSS_SELECTOR, "div[data-identifier = 'primary-address']>div:nth-child(1)").text
+                except:
+                    sch3.loc[inx, 'Address'] = 'No_address'
+                start_time = time.time()
+                while True:
+                    try:
+                        table1_id = driver.find_elements(By.CSS_SELECTOR, "table[role = table]")[0].get_attribute('id')
+                        table2_id = driver.find_elements(By.CSS_SELECTOR, "table[role = table]")[1].get_attribute('id')
+                        break
+                    except:
+                        if time.time() - start_time > timeout:
+                            driver.refresh()
+                            break  # Break the loop if timeout is reached
+                        else:
+                            time.sleep(0.5)
+                            print('Waiting2')
+                try:
+                    sch3.loc[inx, 'Appt Name'] = driver.find_element(
+                        By.XPATH, f"//td[contains(@id, 'appointment')]//a[contains(., '{time2.strftime('%B {0}, %Y'.format(time2.day))}')]"
+                    ).text
+                    sch3.loc[inx, 'Appt Link'] = driver.find_element(
+                        By.XPATH, f"//td[contains(@id, 'appointment')]//a[contains(., '{time2.strftime('%B {0}, %Y'.format(time2.day))}')]"
+                    ).get_attribute('href')
+                except:
+                    sch3.loc[inx, 'Appt Name'] = ''
+                    sch3.loc[inx, 'Appt Link'] = ''
+                if last_visit_text != '':
+                    vdf = pd.DataFrame(columns=['v_date', 'v_diag'])
+                    visits = driver.find_elements(By.CSS_SELECTOR, f"table#{table2_id}>tbody>tr")
+                    if len(visits) > 1:
+                        for seq in range(1, 3):
+                            vdf.loc[seq-1, 'v_diag'] = str([value.text for value in driver.find_elements(
+                                By.CSS_SELECTOR, f"table#{table2_id}>tbody>tr:nth-child({seq})>td:nth-child(2)"
+                                                 f">ema-visit-summary>div"
+                            )])
+                            vdf.loc[seq-1, 'v_date'] = driver.find_element(
+                                By.CSS_SELECTOR, f"table#{table2_id}>tbody>tr:nth-child({seq})>td:nth-child(1)"
+                                                 f">div>div>a"
+                            ).text
+                    elif len(visits) == 1:
+                        vdf.loc[0, 'v_diag'] = str([value.text for value in driver.find_elements(
+                                By.CSS_SELECTOR, f"table#{table2_id}>tbody>tr:nth-child(1)>td:nth-child(2)"
+                                                 f">ema-visit-summary>div"
+                            )])
+                        vdf.loc[0, 'v_date'] = driver.find_element(
+                                By.CSS_SELECTOR, f"table#{table2_id}>tbody>tr:nth-child(1)>td:nth-child(1)"
+                                                 f">div>div>a"
+                            ).text
+                    vdf['v_dates2'] = pd.to_datetime(vdf['v_date'], format='%b %d %Y', errors='coerce')
+                    vdf['v_dates3'] = vdf['v_dates2'].dt.strftime("%m/%d/%Y")
+                    for a_diog, b_date4 in zip(vdf['v_diag'], vdf['v_dates3']):
+                        if 'Neoplasm' in a_diog:
+                            bx_req = True
+                            sch3.loc[inx, 'BX_REQ'] = f'BX REQ: {b_date4}'
+                            break
+                        else:
+                            bx_req = False
+                    try:
+                        lv35 = vdf['v_dates2'].iloc[-1]
+                        sch3.loc[inx, 'second_last_visit'] = lv35
+                    except:
+                        sch3.loc[inx, 'second_last_visit'] = lv3
+                        lv35 = lv3
+                    biologics = ['Dupixent', 'Tremfya', 'Skyrizi', 'Taltz', 'Cosentyx', 'Stelara', 'Humira', 'Ilumya']
+                    meds_sch3 = driver.find_element(
+                        By.CSS_SELECTOR, "ema-patient-clipboard"
+                    ).text
+                    if any(med in meds_sch3 for med in biologics):
+                        bio_point = True
+                    else:
+                        bio_point = False
+                else:
+                    bx_req = False
+                    lv35 = ''
+                    bio_point = False
+                sch3.loc[inx, 'need_bio'] = bio_point
+                # checking attachments                                                      #Step 2
+                driver.find_element(
+                    By.CSS_SELECTOR, "div[data-identifier = 'attachments-tab']"
+                ).click()
+                start_time = time.time()
+                while True:
+                    try:
+                        driver.find_element(By.CSS_SELECTOR, "tr[ng-repeat = 'attachment in $ctrl.attachments']"
+                                                             ">td:nth-child(9)")
+                        break
+                    except:
+                        time.sleep(0.5)
+                        print('Waiting3')
+                    try:
+                        driver.find_element(
+                            By.XPATH, "//div[@class = 'card-content']//div//div[contains(., 'There are no attachments ')]"
+                        )
+                        break
+                    except:
+                        if time.time() - start_time > timeout:
+                            driver.refresh()
+                            break  # Break the loop if timeout is reached
+                        else:
+                            time.sleep(0.5)
+                            print('waiting4')
+                try:
+                    total_resutls = int(re.compile("Total Results: (\d*)").search(driver.find_element(
+                        By.CSS_SELECTOR, "div[class = 'pageTotal']"
+                    ).text)[1])
+                except:
+                    time.sleep(1)
+                    total_resutls = int(re.compile("Total Results: (\d*)").search(driver.find_element(
+                        By.CSS_SELECTOR, "div[class = 'pageTotal']"
+                    ).text)[1])
+                sch3.loc[inx, 'emmalink'] = driver.current_url
+                if total_resutls > 25:
+                    time.sleep(1)
+                    driver.find_element(By.CSS_SELECTOR, "select#pageSizeSelect").click()
+                    driver.find_element(By.CSS_SELECTOR, "select#pageSizeSelect>:last-child").click()
+                    start_time = time.time()
+                    while True:
+                        try:
+                            temp_value = driver.find_element(By.CSS_SELECTOR, "tr[ng-repeat = 'attachment in $ctrl.attachments']"
+                                                                 ">td:nth-child(2)").text
+                            break
+                        except:
+                            if time.time() - start_time > timeout:
+                                driver.refresh()
+                                break  # Break the loop if timeout is reached
+                            else:
+                                time.sleep(0.5)
+                                print('Waiting5')
+                att_df = pd.DataFrame(columns=['Title', 'Date_added', 'Links', 'category'])
+                time.sleep(1)
+                att_df['Title'] = [value.text for value in driver.find_elements(
+                    By.CSS_SELECTOR, "tr[ng-repeat = 'attachment in $ctrl.attachments']>td:nth-child(2)")]
+                att_df['Date_added'] = [value.text for value in driver.find_elements(
+                    By.CSS_SELECTOR, "tr[ng-repeat = 'attachment in $ctrl.attachments']>td:nth-child(9)")]
+                att_df['Links'] = [value.get_attribute('href') for value in driver.find_elements(
+                    By.CSS_SELECTOR, "tr[ng-repeat = 'attachment in $ctrl.attachments']>td:nth-child(4)>a"
+                )]
+                att_df['category'] = [value.text for value in driver.find_elements(
+                    By.CSS_SELECTOR, "tr[ng-repeat = 'attachment in $ctrl.attachments']>td:nth-child(3)"
+                )]
+                att_df['Date_edited'] = pd.to_datetime(att_df['Date_added'], format='%m/%d/%y %I:%M %p', errors='coerce')
+                # ins
+                for ti, da, hrefd in zip(att_df['Title'], att_df['Date_added'], att_df['Links']):
+                    if any(item in ti for item in insurane_card) and "Back" not in ti:
+                        sch3.loc[inx, 'Insurance_name'] = ti
+                        sch3.loc[inx, 'Insurance_date'] = da
+                        sch3.loc[inx, 'Insurance_link'] = hrefd
+                        break
+                    else:
+                        sch3.loc[inx, 'Insurance_name'] = "No Ins Front"
+                        sch3.loc[inx, 'Insurance_date'] = "No Ins Front"
+                        sch3.loc[inx, 'Insurance_link'] = "No Ins Front"
+                for ti, da, hrefd in zip(att_df['Title'], att_df['Date_added'], att_df['Links']):
+                    if any(item in ti for item in insurane_card) and "Back" in ti:
+                        sch3.loc[inx, 'Ins_back'] = ti
+                        break
+                    else:
+                        sch3.loc[inx, 'Ins_back'] = "No Ins Back"
+                for ti, da, hrefd in zip(att_df['Title'], att_df['Date_added'], att_df['Links']):
+                    if any(item in ti.upper() for item in pt_info):
+                        sch3.loc[inx, 'pt_info'] = ti
+                        sch3.loc[inx, 'pt_info_date'] = da
+                        sch3.loc[inx, 'pt_info_href'] = hrefd
+                        break
+                    else:
+                        sch3.loc[inx, 'pt_info'] = 'No Info'
+                        sch3.loc[inx, 'pt_info_date'] = 'No Info'
+                        sch3.loc[inx, 'pt_info_href'] = 'No Info'
+                for ti, da, hrefd in zip(att_df['category'], att_df['Date_added'], att_df['Links']):
+                    if ti == 'Patient ID Card':
+                        sch3.loc[inx, 'id_name'] = ti
+                        sch3.loc[inx, 'id_date'] = da
+                        sch3.loc[inx, 'id_href'] = hrefd
+                        break
+                    else:
+                        sch3.loc[inx, 'id_name'] = 'No ID'
+                        sch3.loc[inx, 'id_date'] = 'No ID'
+                        sch3.loc[inx, 'id_href'] = 'No ID'
+                for ti, da, hefd in zip(att_df['Title'], att_df['Date_added'], att_df['Links']):
+                    if "Patient ID Card" in ti:
+                        sch3.loc[inx, 'pt_id'] = ti
+                        sch3.loc[inx, 'pt_id_date'] = da
+                        sch3.loc[inx, 'pt_id_link'] = hrefd
+                if lv35 != '':
+                    att_df.drop(att_df[att_df['Date_edited'] < lv35].index, inplace=True)
+                    # req
+                    for a, b, c in zip(att_df['Title'], att_df['Date_added'], att_df['Links']):
+                        if "BW REQ" in a.upper():
+                            if a.upper().startswith('A') == True:
+                                sch3.loc[inx, 'BW_REQ'] = f'ABW REQ {b}'
+                            else:
+                                sch3.loc[inx, 'BW_REQ'] = f'BW REQ {b}'
+                            sch3.loc[inx, 'BW_REQ_LINK'] = c
+                            sch3.loc[inx, 'BW_REQ_DATE'] = b
+                        if "XRAY REF" in a.upper() or "ULTRASOUND REF" in a.upper():
+                            sch3.loc[inx, 'XRAY_REF'] = f'{a.upper()} : {b}'
+                            sch3.loc[inx, 'XRAY_REF_LINK'] = c
+                        if a.upper() in ['BX REPROT', 'BX REPORT', 'PATHOLOGY REPORT', 'PATHOLOGY REPROT']:
+                            sch3.loc[inx, 'BX_REPORT'] = a.upper()
+                            sch3.loc[inx, 'bx_report_link'] = c
+                    for a, b, c in zip(att_df['Title'], att_df['Date_added'], att_df['Links']):
+                        if "BW REPORT" in a.upper() or 'BW REPROT' in a.upper():
+                            sch3.loc[inx, 'BW_REPORT'] = a.upper()
+                            sch3.loc[inx, 'BW_REPORT_LINK'] = c
+                            sch3.loc[inx, 'BW_REPORT_DATE'] = b
+                            break
+                if bx_req == True:
+                    driver.get(driver.current_url.replace("attachments=&pid=", "testsAndResults=&pid="))
+                    time.sleep(3)
+                    try:
+                        driver.find_element(
+                            By.XPATH, f"//a[contains(., '{b_date4}')]/parent::*/following-sibling::td/div/a"
+                        ).click()
+                        time.sleep(1)
+                        sch3.loc[inx, 'bx_report_link'] = driver.find_element(
+                            By.CSS_SELECTOR, "object#clinicalEnterResultsPdfObject-0"
+                        ).get_attribute('data')
+                        driver.find_element(By.CSS_SELECTOR, "div[aria-describedby = 'labResultDetailDialog']").send_keys(
+                            Keys.ESCAPE)
+                        sch3.loc[inx, 'BX_REPORT'] = f'BX REPORT: {b_date4}'
+                    except:
+                        pass
+                if bio_point == True:
+                    if lv3 != '':
+                        if lv3 > yearago:
+                            driver.get(driver.current_url.replace("attachments", "rx"))
+                            time.sleep(3)
+                            try:
+                                driver.find_element(By.XPATH, "//span[contains(text(), '100')]").click()
+                            except:
+                                pass
+                            start_time = time.time()
+                            time.sleep(1)
+                            while True:
+                                try:
+                                    list_med = driver.find_elements(By.CSS_SELECTOR, "td[data-title-text = 'Rx']")
+                                    break
+                                except:
+                                    if time.time() - start_time > timeout:
+                                        driver.refresh()
+                                        break  # Break the loop if timeout is reached
+                                    else:
+                                        time.sleep(0.5)
+                                        print('Waiting6')
+                            if len(list_med) > 0:
+                                herfs = driver.find_elements(By.CSS_SELECTOR, "td[data-title-text = 'Rx']>a")
+                                dates = driver.find_elements(By.CSS_SELECTOR, "td[data-title-text = 'Rx'] + td")
+                                biologics = ['Dupixent', 'Tremfya', 'Skyrizi', 'Taltz', 'Cosentyx', 'Stelara', 'Humira',
+                                             'Ilumya']
+
+                                for a, ab, ac in zip(list_med, herfs, dates):
+                                    if any(med in a.text for med in biologics):
+                                        sch3.loc[inx, 'Biologic'] = a.text
+                                        sch3.loc[inx, 'Date Pres'] = ac.text
+                                        sch3.loc[inx, 'meds_link'] = ab.get_attribute('href')
+                                        driver.get(ab.get_attribute('href'))
+                                        start_time = time.time()
+                                        while True:
+                                            try:
+                                                med_status = re.compile('Rx status: (.+)').search(driver.find_element(
+                                                    By.CSS_SELECTOR, "td[aria-describedby = 'tableContainer_status']"
+                                                ).text)[1]
+                                                break
+                                            except:
+                                                if time.time() - start_time > timeout:
+                                                    driver.refresh()
+                                                    break  # Break the loop if timeout is reached
+                                                else:
+                                                    time.sleep(0.5)
+                                                    print('Waiting7')
+                                        if med_status != 'Printed' and med_status != 'Pending':
+                                            sch3.loc[inx, 'Pharmacy'] = driver.find_element(
+                                                By.CSS_SELECTOR, "tr[id = '1']>td:nth-child(7)"
+                                            ).text.split('\n')[3]
+                                            try:
+                                                sch3.loc[inx, 'Pharmacy_number'] = \
+                                                re.compile('Primary: (.+)').search(driver.find_element(
+                                                    By.CSS_SELECTOR, "tr[id = '1']>td:nth-child(7)"
+                                                ).text.split('\n')[-1])[1]
+                                            except:
+                                                sch3.loc[inx, 'Pharmacy_number'] = \
+                                                    re.compile('Primary: (.+)').search(driver.find_element(
+                                                        By.CSS_SELECTOR, "tr[id = '1']>td:nth-child(7)"
+                                                    ).text.split('\n')[-2])[1]
+                                        else:
+                                            sch3.loc[inx, 'Pharmacy'] = 'Rx was Printed'
+                                        break
+                sch3.loc[inx, 'done'] = 'Done'
+                driver.get('https://emr_link/app/Patients.action')
+            how_many -= 1
+            print(how_many)
+        sch3['lastvisit2'] = pd.to_datetime(sch3['lastvisti'], format='%m/%d/%Y', errors='coerce')
+        sch3['BW_REQ_DATE'] = pd.to_datetime(sch3['BW_REQ_DATE'], format='%m/%d/%y %I:%M %p', errors='coerce')
+        sch3['BW_REPORT_DATE'] = pd.to_datetime(sch3['BW_REPORT_DATE'], format='%m/%d/%y %I:%M %p', errors='coerce')
+        sch3['lastvisti'] = sch3['lastvisit2'].dt.strftime("%m/%d/%Y")
+        sch3['Plan1'].replace('', 'Unspecified', inplace=True)
+        sch3 = sch3.fillna('')
+        mask = (sch3['Primary Ins'] == '') & (sch3['Plan1'] != 'Unspecified')
+        sch3.loc[mask, 'Primary Ins'] = sch3.loc[mask, 'Plan1']
+        referal_list = sch3[
+            (sch3['Primary Ins'].isin(['United HealthCare of all states', 'UHC Community Plan New Jersey',
+                                       'UnitedHealthcare Community Plan', 'Emblem Health', 'Healthcare Partners IPA'])) |
+            (sch3['Secondary Ins'].isin(['United HealthCare of all states', 'UHC Community Plan New Jersey',
+                                         'UnitedHealthcare Community Plan', 'Emblem Health', 'Healthcare Partners IPA']))
+            ]
+        united_list = sch3[
+            (sch3['Primary Ins'].isin(
+                ['United HealthCare of all states', 'UHC Community Plan New Jersey', 'UnitedHealthcare Community Plan'])) |
+            (sch3['Secondary Ins'].isin(
+                ['United HealthCare of all states', 'UHC Community Plan New Jersey', 'UnitedHealthcare Community Plan']))
+            ]
+        sch4 = sch3.sort_values('OFFICE')
+        sch3['pt_info_date'] = pd.to_datetime(sch3['pt_info_date'], format='%m/%d/%y %I:%M %p', errors='coerce')
+        Req_pdf(sch4)
+        send_email1(f"Req {listdate}.pdf", f'REQ OF {listdate1}')
+        # United + emblem list
+
+        callingunited(united_list, f'United_of_{listdate}')
+        emblem_list = sch3[
+            (sch3['Primary Ins'].isin(['Emblem Health', 'Healthcare Partners IPA'])) |
+            (sch3['Secondary Ins'].isin(['Emblem Health', 'Healthcare Partners IPA']))
+        ]
+        callingunited(emblem_list, f'Embelm_of_{listdate}')
+        send_email(f'United_of_{listdate}.pdf', "UHC REFERRAL CHECK")
+        send_email1(f'United_of_{listdate}.pdf', "UHC REFERRAL CHECK")
+        send_email1(f'Embelm_of_{listdate}.pdf', "Emblem Referral Check")
+        # Biologic List
+        sch3['Date Pres2'] = pd.to_datetime(sch3['Date Pres'], format='%B %d, %Y %I:%M %p', errors='coerce')
+        sch3['Date Pres'] = sch3['Date Pres2'].dt.strftime("%m/%d/%Y")
+        sch_Nicole = sch3[sch3['need_bio'] == True]
+        Nicole_pdf(sch_Nicole)
+        send_email1(f"Biologic_Total_{listdate}.pdf", f'Biologic_of_{listdate1}')
+        # Review list
+        sch3['Difference'] = sch3['DateFull'] - sch3['lastvisit2']
+        driver.get("https://state_insurance_verication/login.aspx?ReturnUrl=%2fmevs.aspx")
+        driver.implicitly_wait(3)
+        try:
+            driver.find_element(By.CSS_SELECTOR, "input#chkbx").click()
+            driver.find_element(By.CSS_SELECTOR, "input#agreedToTermsBtn").click()
+        except:
+            pass
+        time.sleep(1)
+        driver.find_element(By.CSS_SELECTOR, "input#txtUserName").send_keys("your_username")
+        driver.find_element(By.CSS_SELECTOR, "input#txtPassword").send_keys("your_password")
+        driver.find_element(By.CSS_SELECTOR, "input#btnSubmit").click()
+        time.sleep(5)
+        # for loop starts her
+        njmmis = sch3[(sch3['OFFICE'].isin(['Jersey City', 'Bayonne'])) & (sch3['Primary Ins'].isin([
+            'Horizon New Jersey Health', 'Wellcare of New Jersey', 'UnitedHealthcare Community Plan',
+            'UHC Community Plan New Jersey', 'Amerigroup New Jersey',
+            'Aetna Better Health of New Jersey', 'Wellpoint'
+        ]))]
+        how_nj_left = len(njmmis)
+        for pt_name, dob, inx, dos, mrn in zip(njmmis['PTNTNAME'], njmmis['DOB'], njmmis.index, njmmis['ApptDate'],
+                                               njmmis['PTNTACCT']):
+            driver.find_element(By.CSS_SELECTOR, "input#btnReset").click()
+            driver.find_element(By.CSS_SELECTOR, "input#rblParams_2").click()
+            driver.find_element(By.CSS_SELECTOR, "input#txtBeginDate").send_keys(dos)
+            driver.find_element(By.CSS_SELECTOR, "input#txtEndDate").send_keys(dos)
+            fn = pt_name.split(', ')[1]
+            ln = pt_name.split(', ')[0]
+            driver.find_element(By.CSS_SELECTOR, "input#txtFName").send_keys(fn)
+            driver.find_element(By.CSS_SELECTOR, "input#txtLName").send_keys(ln)
+            driver.find_element(By.CSS_SELECTOR, "input#txtDOB").send_keys(dob)
+            driver.find_element(By.CSS_SELECTOR, "input#btnSubmit").click()
+            try:
+                error_message = driver.find_element(By.CSS_SELECTOR, "span#lblErrorMessage").text
+                sch3.loc[inx, 'error_message'] = error_message
+                sch3.loc[inx, 'third_party_message'] = ''
+            except:
+                sch3.loc[inx, 'error_message'] = ''
+                dob_nj = driver.find_element(By.CSS_SELECTOR, "span#MevsResultsHeader1_lblDOB").text
+                if datetime.strptime(dob, '%m/%d/%Y') == datetime.strptime(dob_nj, '%m/%d/%Y'):
+                    try:
+                        sch3.loc[inx, 'plan_name'] = re.compile('NJ FAMILYCARE (\w+ \w)').search(
+                            driver.find_element(By.CSS_SELECTOR, "span#MevsMedicaidEligData1_lblMessage").text
+                        )[1]
+                    except:
+                        sch3.loc[inx, 'plan_name'] = 'No Data'
+                    try:
+                        hmo_name_variable = driver.find_element(By.CSS_SELECTOR,
+                                                                "span#MevsMedicaidManagedCareEnrollData1_1_lblMcoName").text
+                        sch3.loc[inx, 'hmo_name'] = hmo_name_variable
+                    except:
+                        sch3.loc[inx, 'hmo_name'] = 'No Data'
+                    try:
+                        third_table = driver.find_element(By.CSS_SELECTOR, "td#TD1>table:last-child").text
+                    except:
+                        third_table = driver.find_elements(By.CSS_SELECTOR, "td#TD1>table")[-1].text
+                    if 'No Data' in third_table:
+                        sch3.loc[inx, 'third_party'] = False
+                        sch3.loc[inx, 'third_party_message'] = 'No Third Party Data'
+                    else:
+                        tables = driver.find_elements(By.CSS_SELECTOR, "td#TD1>table")
+                        third_table1 = tables[-2].text
+                        if 'DUAL' in hmo_name_variable or 'TOTALCARE' in hmo_name_variable:
+                            sch3.loc[inx, 'third_party'] = False
+                            sch3.loc[inx, 'third_party_message'] = 'Dual Coverage'
+                        else:
+                            sch3.loc[inx, 'third_party'] = True
+                            sch3.loc[inx, 'third_party_message'] = third_table1
+                else:
+                    sch3.loc[inx, 'error_message'] = "DOB Didn't Match"
+                    sch3.loc[inx, 'third_party_message'] = ''
+            how_nj_left -= 1
+            print(how_nj_left)
+        driver.quit()
+        mask1 = (sch3['hmo_name'] == 'UNITEDHEALTHCARE') & (sch3['Primary Ins'].str.contains('UHC|United'))
+        sch3.loc[mask1, 'Primary Ins'] = 'UnitedHealthcare Community Plan'
+        mask2 = (sch3['hmo_name'] == 'UNITEDHEALTHCARE DUAL COMPLETE ONE (HMO SNP)') & (sch3['Primary Ins'].str.contains('UHC|United'))
+        sch3.loc[mask2, 'Primary Ins'] = 'United HealthCare of all states'
+        sch3['hmo_name'] = sch3['hmo_name'].map(hmo_dict).fillna('')
+        sch3['documented'] = False
+        Culprit()
+        Culprit()
+        precheckers(sch3)
+        sch3.to_csv("CALLING_LIST.csv", index=False)
+        os.rename("CALLING_LIST.csv",
+                  f'C:\\Users\\{user_name}\\OneDrive\\Documents\\OLD FILES\\CSV FILES DAILY\\CALLING_LIST_{listdate}.csv')
+        driver.quit()
+        break
+    except:
+        driver = webdriver.Chrome(options=chrome_options,
+                                  service=Service(f'C:\\Users\\{user_name}\\Downloads\\chromedriver.exe'))
+        driver.maximize_window()
+        driver.implicitly_wait(10)
+        driver.get("https://emr_link/ProviderLogin.action")
+        driver.find_element(By.NAME, "username").send_keys('your_username')
+        driver.find_element(By.NAME, "password").send_keys('your_password')
+        driver.find_element(By.NAME, "password").send_keys(Keys.ENTER)
+now = datetime.now()
+dayvlu = now.weekday()
+if dayvlu == 2:
+    now += timedelta(days=3)
+    yearr = now.year
+    montht = now.month
+    num_days = monthrange(yearr, montht)[1]
+    StartDate = f"{montht}/01/{yearr}"
+    EndDate = f"{montht}/{num_days}/{yearr}"
+    Magic = now.strftime("%m/%d/%Y")
+    print(Magic)
+    driver = webdriver.Chrome(options=chrome_options,
+                              service=Service(f'C:\\Users\\{user_name}\\Downloads\\chromedriver.exe'))
+    driver.maximize_window()
+    driver.implicitly_wait(10)
+    sch3 = pd.DataFrame(columns=[
+        'ApptDate', 'ApptTime', 'Provider', 'OFFICE', 'PTNTNAME', 'DOB',
+        'PTNTACCT', 'Gender', 'Age', 'PROCEDURE', 'Mobile', 'Work', 'Home',
+        'ApptStage', 'ApptNote', 'Responsiblity', 'Primary Ins',
+        'Secondary Ins', 'Primary Status', 'Secondary Status', 'link',
+        'lastvisti', 'pt_page', 'Plan1', 'Address', 'Appt Name', 'Appt Link',
+        'BX_REQ', 'second_last_visit', 'emmalink', 'visits_link', 'meds_link',
+        'lastvisit2', 'Insurance_name', 'Insurance_date', 'BW_REPORT', 'BW_REQ',
+        'XRAY_REF', 'BX_REPORT', 'Culp Name', 'Culp Date', 'Biologic',
+        'Date Pres', 'need_bio', 'Pharmacy', 'Plan1_Policy', 'LASTNAME',
+        'FIRSTNAME', 'datefull', 'DateFull', 'dateofweek', 'day', 'month',
+        'year', 'ApptHour', 'ApptDay', 'ApptDate2', 'schTime1', 'schTime',
+        'Date Pres2', 'Difference', 'ballance', 'Check_Doc', 'BW_REQ_LINK',
+        'BW_REPORT_LINK', 'bx_report_link', 'XRAY_REF_LINK', 'Insurance_link', 'Pharmacy_number',
+        'pt_info', 'pt_info_date', 'pt_info_href', 'third_party', 'BW_REPORT_DATE', 'BW_REQ_DATE',
+        'id_name', 'id_date', 'id_href', 'error_message', 'third_party_message', 'plan_name',
+        'hmo_name', 'Ins_back', 'balance', 'ded_notes', 'primary_ins_edited', 'documented'
+
+    ])
+    list2()
+    time.sleep(5)
+    if len(sch3) > 0:
+        listdate1 = sch3['ApptDate'].value_counts().index[0]
+        listdate = listdate1.replace('/', '-')
+        timeout = 60
+        sch3['done'] = 'Not Done'
+        while True:
+            try:
+                how_many = len(sch3)
+                driver.get('https://emr_link/app/Patients.action')
+                for pt_account, inx, done_or, time2 in zip(sch3['PTNTACCT'], sch3.index, sch3['done'], sch3['DateFull']):
+                    if done_or == 'Not Done':
+                        wait = WebDriverWait(
+                            driver, 10, ignored_exceptions=[ElementClickInterceptedException, StaleElementReferenceException
+                                                            ])
+                        start_time = time.time()
+                        while True:
+                            try:
+                                driver.find_element(By.CSS_SELECTOR,
+                                                    "ng-select[data-identifier='filterBy']>div>div>div>input").click()
+                                break
+                            except:
+                                # Check if the timeout has been reached
+                                if time.time() - start_time > timeout:
+                                    driver.refresh()
+                                    break  # Break the loop if timeout is reached
+                                else:
+                                    # Wait for 0.5 seconds before trying again
+                                    time.sleep(0.5)
+                                    print('Waiting')
+                        driver.find_element(By.CSS_SELECTOR,
+                                            "ng-select[data-identifier = 'filterBy']>div>div>div>input").send_keys('MRN')
+                        driver.find_element(By.CSS_SELECTOR,
+                                            "ng-select[data-identifier = 'filterBy']>div>div>div>input").send_keys(
+                            Keys.ENTER)
+                        driver.find_element(By.CSS_SELECTOR, "input[data-identifier = 'filterValue']").clear()
+                        driver.find_element(By.CSS_SELECTOR, "input[data-identifier = 'filterValue']").send_keys(pt_account)
+                        driver.find_element(By.CSS_SELECTOR, "button[data-identifier = 'save']").click()
+                        time.sleep(1)
+                        start_time = time.time()
+                        while True:
+                            try:
+                                last_visit_text = driver.find_element(
+                                    By.CSS_SELECTOR, "table[role = 'table']>tbody>tr>td:nth-child(9)"
+                                ).get_attribute("innerText")
+                                break
+                            except:
+                                if time.time() - start_time > timeout:
+                                    driver.refresh()
+                                    break  # Break the loop if timeout is reached
+                                else:
+                                    driver.find_element(By.CSS_SELECTOR, "button[data-identifier = 'save']").click()
+                        if last_visit_text != '':
+                            lv3 = datetime.strptime(last_visit_text, '%m/%d/%Y')
+                        else:
+                            lv3 = ''
+                        sch3.loc[inx, 'lastvisti'] = last_visit_text
+                        wait.until(
+                            EC.element_to_be_clickable((
+                                By.CSS_SELECTOR, "table[role = 'table']>tbody>tr>td:nth-child(1)>span>a"
+                            ))
+                        ).click()
+                        time.sleep(1)
+                        sch3.loc[inx, 'pt_page'] = driver.current_url
+                        start_time = time.time()
+                        while True:
+                            try:
+                                driver.find_element(
+                                    By.XPATH, "//div[contains(@class, 'patient-header-expansion')]//div//div"
+                                ).click()
+                                break
+                            except:
+                                if time.time() - start_time > timeout:
+                                    driver.refresh()
+                                    break  # Break the loop if timeout is reached
+                                else:
+                                    pass
+                        try:
+                            time.sleep(1)
+                            sch3.loc[inx, 'Plan1'] = driver.find_element(
+                                By.CSS_SELECTOR, "span[ data-identifier = 'insurance-company-name']").text
+                            sch3.loc[inx, 'Plan1_Policy'] = driver.find_element(
+                                By.CSS_SELECTOR, "span[data-identifier = 'policy-number']").text
+                        except:
+                            try:
+                                sch3.loc[inx, 'Plan1'] = driver.find_element(
+                                    By.CSS_SELECTOR,
+                                    "div[data-identifier = 'primary-active-insurance-policy']>div:nth-child(2)"
+                                ).text
+                                sch3.loc[inx, 'Plan1_Policy'] = ''
+                            except:
+                                pass
+                        try:
+                            sch3.loc[inx, 'Address'] = driver.find_element(
+                                By.CSS_SELECTOR, "div[data-identifier = 'primary-address']>div:nth-child(1)").text
+                        except:
+                            sch3.loc[inx, 'Address'] = 'No_address'
+                        start_time = time.time()
+                        while True:
+                            try:
+                                table1_id = driver.find_elements(By.CSS_SELECTOR, "table[role = table]")[0].get_attribute(
+                                    'id')
+                                table2_id = driver.find_elements(By.CSS_SELECTOR, "table[role = table]")[1].get_attribute(
+                                    'id')
+                                break
+                            except:
+                                if time.time() - start_time > timeout:
+                                    driver.refresh()
+                                    break  # Break the loop if timeout is reached
+                                else:
+                                    time.sleep(0.5)
+                                    print('Waiting2')
+                        try:
+                            sch3.loc[inx, 'Appt Name'] = driver.find_element(
+                                By.XPATH,
+                                f"//td[contains(@id, 'appointment')]//a[contains(., '{time2.strftime('%B {0}, %Y'.format(time2.day))}')]"
+                            ).text
+                            sch3.loc[inx, 'Appt Link'] = driver.find_element(
+                                By.XPATH,
+                                f"//td[contains(@id, 'appointment')]//a[contains(., '{time2.strftime('%B {0}, %Y'.format(time2.day))}')]"
+                            ).get_attribute('href')
+                        except:
+                            sch3.loc[inx, 'Appt Name'] = ''
+                            sch3.loc[inx, 'Appt Link'] = ''
+                        if last_visit_text != '':
+                            vdf = pd.DataFrame(columns=['v_date', 'v_diag'])
+                            visits = driver.find_elements(By.CSS_SELECTOR, f"table#{table2_id}>tbody>tr")
+                            if len(visits) > 1:
+                                for seq in range(1, 3):
+                                    vdf.loc[seq - 1, 'v_diag'] = str([value.text for value in driver.find_elements(
+                                        By.CSS_SELECTOR, f"table#{table2_id}>tbody>tr:nth-child({seq})>td:nth-child(2)"
+                                                         f">ema-visit-summary>div"
+                                    )])
+                                    vdf.loc[seq - 1, 'v_date'] = driver.find_element(
+                                        By.CSS_SELECTOR, f"table#{table2_id}>tbody>tr:nth-child({seq})>td:nth-child(1)"
+                                                         f">div>div>a"
+                                    ).text
+                            elif len(visits) == 1:
+                                vdf.loc[0, 'v_diag'] = str([value.text for value in driver.find_elements(
+                                    By.CSS_SELECTOR, f"table#{table2_id}>tbody>tr:nth-child(1)>td:nth-child(2)"
+                                                     f">ema-visit-summary>div"
+                                )])
+                                vdf.loc[0, 'v_date'] = driver.find_element(
+                                    By.CSS_SELECTOR, f"table#{table2_id}>tbody>tr:nth-child(1)>td:nth-child(1)"
+                                                     f">div>div>a"
+                                ).text
+                            vdf['v_dates2'] = pd.to_datetime(vdf['v_date'], format='%b %d %Y', errors='coerce')
+                            vdf['v_dates3'] = vdf['v_dates2'].dt.strftime("%m/%d/%Y")
+                            for a_diog, b_date4 in zip(vdf['v_diag'], vdf['v_dates3']):
+                                if 'Neoplasm' in a_diog:
+                                    bx_req = True
+                                    sch3.loc[inx, 'BX_REQ'] = f'BX REQ: {b_date4}'
+                                    break
+                                else:
+                                    bx_req = False
+                            try:
+                                lv35 = vdf['v_dates2'].iloc[-1]
+                                sch3.loc[inx, 'second_last_visit'] = lv35
+                            except:
+                                sch3.loc[inx, 'second_last_visit'] = lv3
+                                lv35 = lv3
+                            biologics = ['Dupixent', 'Tremfya', 'Skyrizi', 'Taltz', 'Cosentyx', 'Stelara', 'Humira',
+                                         'Ilumya']
+                            meds_sch3 = driver.find_element(
+                                By.CSS_SELECTOR, "ema-patient-clipboard"
+                            ).text
+                            if any(med in meds_sch3 for med in biologics):
+                                bio_point = True
+                            else:
+                                bio_point = False
+                        else:
+                            bx_req = False
+                            lv35 = ''
+                            bio_point = False
+                        sch3.loc[inx, 'need_bio'] = bio_point
+                        # checking attachments                                                      #Step 2
+                        driver.find_element(
+                            By.CSS_SELECTOR, "div[data-identifier = 'attachments-tab']"
+                        ).click()
+                        start_time = time.time()
+                        while True:
+                            try:
+                                driver.find_element(By.CSS_SELECTOR, "tr[ng-repeat = 'attachment in $ctrl.attachments']"
+                                                                     ">td:nth-child(9)")
+                                break
+                            except:
+                                time.sleep(0.5)
+                                print('Waiting3')
+                            try:
+                                driver.find_element(
+                                    By.XPATH,
+                                    "//div[@class = 'card-content']//div//div[contains(., 'There are no attachments ')]"
+                                )
+                                break
+                            except:
+                                if time.time() - start_time > timeout:
+                                    driver.refresh()
+                                    break  # Break the loop if timeout is reached
+                                else:
+                                    time.sleep(0.5)
+                                    print('waiting4')
+                        try:
+                            total_resutls = int(re.compile("Total Results: (\d*)").search(driver.find_element(
+                                By.CSS_SELECTOR, "div[class = 'pageTotal']"
+                            ).text)[1])
+                        except:
+                            time.sleep(1)
+                            total_resutls = int(re.compile("Total Results: (\d*)").search(driver.find_element(
+                                By.CSS_SELECTOR, "div[class = 'pageTotal']"
+                            ).text)[1])
+                        sch3.loc[inx, 'emmalink'] = driver.current_url
+                        if total_resutls > 25:
+                            time.sleep(1)
+                            driver.find_element(By.CSS_SELECTOR, "select#pageSizeSelect").click()
+                            driver.find_element(By.CSS_SELECTOR, "select#pageSizeSelect>:last-child").click()
+                            start_time = time.time()
+                            while True:
+                                try:
+                                    temp_value = driver.find_element(By.CSS_SELECTOR,
+                                                                     "tr[ng-repeat = 'attachment in $ctrl.attachments']"
+                                                                     ">td:nth-child(2)").text
+                                    break
+                                except:
+                                    if time.time() - start_time > timeout:
+                                        driver.refresh()
+                                        break  # Break the loop if timeout is reached
+                                    else:
+                                        time.sleep(0.5)
+                                        print('Waiting5')
+                        att_df = pd.DataFrame(columns=['Title', 'Date_added', 'Links', 'category'])
+                        time.sleep(1)
+                        att_df['Title'] = [value.text for value in driver.find_elements(
+                            By.CSS_SELECTOR, "tr[ng-repeat = 'attachment in $ctrl.attachments']>td:nth-child(2)")]
+                        att_df['Date_added'] = [value.text for value in driver.find_elements(
+                            By.CSS_SELECTOR, "tr[ng-repeat = 'attachment in $ctrl.attachments']>td:nth-child(9)")]
+                        att_df['Links'] = [value.get_attribute('href') for value in driver.find_elements(
+                            By.CSS_SELECTOR, "tr[ng-repeat = 'attachment in $ctrl.attachments']>td:nth-child(4)>a"
+                        )]
+                        att_df['category'] = [value.text for value in driver.find_elements(
+                            By.CSS_SELECTOR, "tr[ng-repeat = 'attachment in $ctrl.attachments']>td:nth-child(3)"
+                        )]
+                        att_df['Date_edited'] = pd.to_datetime(att_df['Date_added'], format='%m/%d/%y %I:%M %p',
+                                                               errors='coerce')
+                        # ins
+                        for ti, da, hrefd in zip(att_df['Title'], att_df['Date_added'], att_df['Links']):
+                            if any(item in ti for item in insurane_card) and "Back" not in ti:
+                                sch3.loc[inx, 'Insurance_name'] = ti
+                                sch3.loc[inx, 'Insurance_date'] = da
+                                sch3.loc[inx, 'Insurance_link'] = hrefd
+                                break
+                            else:
+                                sch3.loc[inx, 'Insurance_name'] = "No Ins Front"
+                                sch3.loc[inx, 'Insurance_date'] = "No Ins Front"
+                                sch3.loc[inx, 'Insurance_link'] = "No Ins Front"
+                        for ti, da, hrefd in zip(att_df['Title'], att_df['Date_added'], att_df['Links']):
+                            if any(item in ti for item in insurane_card) and "Back" in ti:
+                                sch3.loc[inx, 'Ins_back'] = ti
+                                break
+                            else:
+                                sch3.loc[inx, 'Ins_back'] = "No Ins Back"
+                        for ti, da, hrefd in zip(att_df['Title'], att_df['Date_added'], att_df['Links']):
+                            if any(item in ti.upper() for item in pt_info):
+                                sch3.loc[inx, 'pt_info'] = ti
+                                sch3.loc[inx, 'pt_info_date'] = da
+                                sch3.loc[inx, 'pt_info_href'] = hrefd
+                                break
+                            else:
+                                sch3.loc[inx, 'pt_info'] = 'No Info'
+                                sch3.loc[inx, 'pt_info_date'] = 'No Info'
+                                sch3.loc[inx, 'pt_info_href'] = 'No Info'
+                        for ti, da, hrefd in zip(att_df['category'], att_df['Date_added'], att_df['Links']):
+                            if ti == 'Patient ID Card':
+                                sch3.loc[inx, 'id_name'] = ti
+                                sch3.loc[inx, 'id_date'] = da
+                                sch3.loc[inx, 'id_href'] = hrefd
+                                break
+                            else:
+                                sch3.loc[inx, 'id_name'] = 'No ID'
+                                sch3.loc[inx, 'id_date'] = 'No ID'
+                                sch3.loc[inx, 'id_href'] = 'No ID'
+                        for ti, da, hefd in zip(att_df['Title'], att_df['Date_added'], att_df['Links']):
+                            if "Patient ID Card" in ti:
+                                sch3.loc[inx, 'pt_id'] = ti
+                                sch3.loc[inx, 'pt_id_date'] = da
+                                sch3.loc[inx, 'pt_id_link'] = hrefd
+                        if lv35 != '':
+                            att_df.drop(att_df[att_df['Date_edited'] < lv35].index, inplace=True)
+                            # req
+                            for a, b, c in zip(att_df['Title'], att_df['Date_added'], att_df['Links']):
+                                if "BW REQ" in a.upper():
+                                    if a.upper().startswith('A') == True:
+                                        sch3.loc[inx, 'BW_REQ'] = f'ABW REQ {b}'
+                                    else:
+                                        sch3.loc[inx, 'BW_REQ'] = f'BW REQ {b}'
+                                    sch3.loc[inx, 'BW_REQ_LINK'] = c
+                                    sch3.loc[inx, 'BW_REQ_DATE'] = b
+                                    break
+                            for a, b, c in zip(att_df['Title'], att_df['Date_added'], att_df['Links']):
+                                if "XRAY REF" in a.upper() or "ULTRASOUND REF" in a.upper():
+                                    sch3.loc[inx, 'XRAY_REF'] = f'{a.upper()} : {b}'
+                                    sch3.loc[inx, 'XRAY_REF_LINK'] = c
+                                    break
+                            for a, b, c in zip(att_df['Title'], att_df['Date_added'], att_df['Links']):
+                                if "BX REPORT" in a.upper() or 'BX REPROT' in a.upper():
+                                    sch3.loc[inx, 'BX_REPORT'] = a.upper()
+                                    sch3.loc[inx, 'bx_report_link'] = c
+                                    break
+                            for a, b, c in zip(att_df['Title'], att_df['Date_added'], att_df['Links']):
+                                if "BW REPORT" in a.upper() or 'BW REPROT' in a.upper():
+                                    sch3.loc[inx, 'BW_REPORT'] = a.upper()
+                                    sch3.loc[inx, 'BW_REPORT_LINK'] = c
+                                    sch3.loc[inx, 'BW_REPORT_DATE'] = b
+                                    break
+                        if bx_req == True:
+                            driver.get(driver.current_url.replace("attachments=&pid=", "testsAndResults=&pid="))
+                            time.sleep(3)
+                            try:
+                                driver.find_element(
+                                    By.XPATH, f"//a[contains(., '{b_date4}')]/parent::*/following-sibling::td/div/a"
+                                ).click()
+                                time.sleep(1)
+                                sch3.loc[inx, 'bx_report_link'] = driver.find_element(
+                                    By.CSS_SELECTOR, "object#clinicalEnterResultsPdfObject-0"
+                                ).get_attribute('data')
+                                driver.find_element(By.CSS_SELECTOR,
+                                                    "div[aria-describedby = 'labResultDetailDialog']").send_keys(
+                                    Keys.ESCAPE)
+                                sch3.loc[inx, 'BX_REPORT'] = f'BX REPORT: {b_date4}'
+                            except:
+                                pass
+                        if bio_point == True:
+                            if lv3 != '':
+                                if lv3 > yearago:
+                                    driver.get(driver.current_url.replace("attachments", "rx"))
+                                    time.sleep(3)
+                                    try:
+                                        driver.find_element(By.XPATH, "//span[contains(text(), '100')]").click()
+                                    except:
+                                        pass
+                                    start_time = time.time()
+                                    time.sleep(1)
+                                    while True:
+                                        try:
+                                            list_med = driver.find_elements(By.CSS_SELECTOR, "td[data-title-text = 'Rx']")
+                                            break
+                                        except:
+                                            if time.time() - start_time > timeout:
+                                                driver.refresh()
+                                                break  # Break the loop if timeout is reached
+                                            else:
+                                                time.sleep(0.5)
+                                                print('Waiting6')
+                                    if len(list_med) > 0:
+                                        herfs = driver.find_elements(By.CSS_SELECTOR, "td[data-title-text = 'Rx']>a")
+                                        dates = driver.find_elements(By.CSS_SELECTOR, "td[data-title-text = 'Rx'] + td")
+                                        biologics = ['Dupixent', 'Tremfya', 'Skyrizi', 'Taltz', 'Cosentyx', 'Stelara',
+                                                     'Humira',
+                                                     'Ilumya']
+
+                                        for a, ab, ac in zip(list_med, herfs, dates):
+                                            if any(med in a.text for med in biologics):
+                                                sch3.loc[inx, 'Biologic'] = a.text
+                                                sch3.loc[inx, 'Date Pres'] = ac.text
+                                                sch3.loc[inx, 'meds_link'] = ab.get_attribute('href')
+                                                driver.get(ab.get_attribute('href'))
+                                                start_time = time.time()
+                                                while True:
+                                                    try:
+                                                        med_status = \
+                                                        re.compile('Rx status: (.+)').search(driver.find_element(
+                                                            By.CSS_SELECTOR,
+                                                            "td[aria-describedby = 'tableContainer_status']"
+                                                        ).text)[1]
+                                                        break
+                                                    except:
+                                                        if time.time() - start_time > timeout:
+                                                            driver.refresh()
+                                                            break  # Break the loop if timeout is reached
+                                                        else:
+                                                            time.sleep(0.5)
+                                                            print('Waiting7')
+                                                if med_status != 'Printed' and med_status != 'Pending':
+                                                    sch3.loc[inx, 'Pharmacy'] = driver.find_element(
+                                                        By.CSS_SELECTOR, "tr[id = '1']>td:nth-child(7)"
+                                                    ).text.split('\n')[3]
+                                                    try:
+                                                        sch3.loc[inx, 'Pharmacy_number'] = \
+                                                            re.compile('Primary: (.+)').search(driver.find_element(
+                                                                By.CSS_SELECTOR, "tr[id = '1']>td:nth-child(7)"
+                                                            ).text.split('\n')[-1])[1]
+                                                    except:
+                                                        sch3.loc[inx, 'Pharmacy_number'] = \
+                                                            re.compile('Primary: (.+)').search(driver.find_element(
+                                                                By.CSS_SELECTOR, "tr[id = '1']>td:nth-child(7)"
+                                                            ).text.split('\n')[-2])[1]
+                                                else:
+                                                    sch3.loc[inx, 'Pharmacy'] = 'Rx was Printed'
+                                                break
+                        sch3.loc[inx, 'done'] = 'Done'
+                        driver.get('https://emr_link/app/Patients.action')
+                    how_many -= 1
+                    print(how_many)
+                sch3['lastvisit2'] = pd.to_datetime(sch3['lastvisti'], format='%m/%d/%Y', errors='coerce')
+                sch3['BW_REQ_DATE'] = pd.to_datetime(sch3['BW_REQ_DATE'], format='%m/%d/%y %I:%M %p', errors='coerce')
+                sch3['BW_REPORT_DATE'] = pd.to_datetime(sch3['BW_REPORT_DATE'], format='%m/%d/%y %I:%M %p', errors='coerce')
+                sch3['lastvisti'] = sch3['lastvisit2'].dt.strftime("%m/%d/%Y")
+                sch3['Plan1'].replace('', 'Unspecified', inplace=True)
+                sch3 = sch3.fillna('')
+                mask = (sch3['Primary Ins'] == '') & (sch3['Plan1'] != 'Unspecified')
+                sch3.loc[mask, 'Primary Ins'] = sch3.loc[mask, 'Plan1']
+                referal_list = sch3[
+                    (sch3['Primary Ins'].isin(['United HealthCare of all states', 'UHC Community Plan New Jersey',
+                                               'UnitedHealthcare Community Plan', 'Emblem Health',
+                                               'Healthcare Partners IPA'])) |
+                    (sch3['Secondary Ins'].isin(['United HealthCare of all states', 'UHC Community Plan New Jersey',
+                                                 'UnitedHealthcare Community Plan', 'Emblem Health',
+                                                 'Healthcare Partners IPA']))
+                    ]
+                united_list = sch3[
+                    (sch3['Primary Ins'].isin(
+                        ['United HealthCare of all states', 'UHC Community Plan New Jersey',
+                         'UnitedHealthcare Community Plan'])) |
+                    (sch3['Secondary Ins'].isin(
+                        ['United HealthCare of all states', 'UHC Community Plan New Jersey',
+                         'UnitedHealthcare Community Plan']))
+                    ]
+                sch4 = sch3.sort_values('OFFICE')
+                sch3['pt_info_date'] = pd.to_datetime(sch3['pt_info_date'], format='%m/%d/%y %I:%M %p', errors='coerce')
+                Req_pdf(sch4)
+                send_email1(f"Req {listdate}.pdf", f'REQ OF {listdate1}')
+                # United + emblem list
+
+                callingunited(united_list, f'United_of_{listdate}')
+                emblem_list = sch3[
+                    (sch3['Primary Ins'].isin(['Emblem Health', 'Healthcare Partners IPA'])) |
+                    (sch3['Secondary Ins'].isin(['Emblem Health', 'Healthcare Partners IPA']))
+                    ]
+                callingunited(emblem_list, f'Embelm_of_{listdate}')
+                send_email(f'United_of_{listdate}.pdf', "UHC REFERRAL CHECK")
+                send_email1(f'United_of_{listdate}.pdf', "UHC REFERRAL CHECK")
+                send_email1(f'Embelm_of_{listdate}.pdf', "Emblem Referral Check")
+                # Biologic List
+                sch3['Date Pres2'] = pd.to_datetime(sch3['Date Pres'], format='%B %d, %Y %I:%M %p', errors='coerce')
+                sch3['Date Pres'] = sch3['Date Pres2'].dt.strftime("%m/%d/%Y")
+                sch_Nicole = sch3[sch3['need_bio'] == True]
+                Nicole_pdf(sch_Nicole)
+                send_email1(f"Biologic_Total_{listdate}.pdf", f'Biologic_of_{listdate1}')
+                # Review list
+                sch3['Difference'] = sch3['DateFull'] - sch3['lastvisit2']
+                driver.get("https://state_insurance_verication/login.aspx?ReturnUrl=%2fmevs.aspx")
+                driver.implicitly_wait(3)
+                try:
+                    driver.find_element(By.CSS_SELECTOR, "input#chkbx").click()
+                    driver.find_element(By.CSS_SELECTOR, "input#agreedToTermsBtn").click()
+                except:
+                    pass
+                time.sleep(1)
+                driver.find_element(By.CSS_SELECTOR, "input#txtUserName").send_keys("your_username")
+                driver.find_element(By.CSS_SELECTOR, "input#txtPassword").send_keys("your_password")
+                driver.find_element(By.CSS_SELECTOR, "input#btnSubmit").click()
+                time.sleep(5)
+                # for loop starts her
+                njmmis = sch3[(sch3['OFFICE'].isin(['Jersey City', 'Bayonne'])) & (sch3['Primary Ins'].isin([
+                    'Horizon New Jersey Health', 'Wellcare of New Jersey', 'UnitedHealthcare Community Plan',
+                    'UHC Community Plan New Jersey', 'Amerigroup New Jersey',
+                    'Aetna Better Health of New Jersey', 'Wellpoint'
+                ]))]
+                how_nj_left = len(njmmis)
+                for pt_name, dob, inx, dos, mrn in zip(njmmis['PTNTNAME'], njmmis['DOB'], njmmis.index, njmmis['ApptDate'],
+                                                       njmmis['PTNTACCT']):
+                    driver.find_element(By.CSS_SELECTOR, "input#btnReset").click()
+                    driver.find_element(By.CSS_SELECTOR, "input#rblParams_2").click()
+                    driver.find_element(By.CSS_SELECTOR, "input#txtBeginDate").send_keys(dos)
+                    driver.find_element(By.CSS_SELECTOR, "input#txtEndDate").send_keys(dos)
+                    fn = pt_name.split(', ')[1]
+                    ln = pt_name.split(', ')[0]
+                    driver.find_element(By.CSS_SELECTOR, "input#txtFName").send_keys(fn)
+                    driver.find_element(By.CSS_SELECTOR, "input#txtLName").send_keys(ln)
+                    driver.find_element(By.CSS_SELECTOR, "input#txtDOB").send_keys(dob)
+                    driver.find_element(By.CSS_SELECTOR, "input#btnSubmit").click()
+                    try:
+                        error_message = driver.find_element(By.CSS_SELECTOR, "span#lblErrorMessage").text
+                        sch3.loc[inx, 'error_message'] = error_message
+                        sch3.loc[inx, 'third_party_message'] = ''
+                    except:
+                        sch3.loc[inx, 'error_message'] = ''
+                        dob_nj = driver.find_element(By.CSS_SELECTOR, "span#MevsResultsHeader1_lblDOB").text
+                        if datetime.strptime(dob, '%m/%d/%Y') == datetime.strptime(dob_nj, '%m/%d/%Y'):
+                            try:
+                                sch3.loc[inx, 'plan_name'] = re.compile('NJ FAMILYCARE (\w+ \w)').search(
+                                    driver.find_element(By.CSS_SELECTOR, "span#MevsMedicaidEligData1_lblMessage").text
+                                )[1]
+                            except:
+                                sch3.loc[inx, 'plan_name'] = 'No Data'
+                            try:
+                                hmo_name_variable = driver.find_element(By.CSS_SELECTOR,
+                                                                        "span#MevsMedicaidManagedCareEnrollData1_1_lblMcoName").text
+                                sch3.loc[inx, 'hmo_name'] = hmo_name_variable
+                            except:
+                                sch3.loc[inx, 'hmo_name'] = 'No Data'
+                            try:
+                                third_table = driver.find_element(By.CSS_SELECTOR, "td#TD1>table:last-child").text
+                            except:
+                                third_table = driver.find_elements(By.CSS_SELECTOR, "td#TD1>table")[-1].text
+                            if 'No Data' in third_table:
+                                sch3.loc[inx, 'third_party'] = False
+                                sch3.loc[inx, 'third_party_message'] = 'No Third Party Data'
+                            else:
+                                tables = driver.find_elements(By.CSS_SELECTOR, "td#TD1>table")
+                                third_table1 = tables[-2].text
+                                if 'DUAL' in hmo_name_variable or 'TOTALCARE' in hmo_name_variable:
+                                    sch3.loc[inx, 'third_party'] = False
+                                    sch3.loc[inx, 'third_party_message'] = 'Dual Coverage'
+                                else:
+                                    sch3.loc[inx, 'third_party'] = True
+                                    sch3.loc[inx, 'third_party_message'] = third_table1
+                        else:
+                            sch3.loc[inx, 'error_message'] = "DOB Didn't Match"
+                            sch3.loc[inx, 'third_party_message'] = ''
+                    how_nj_left -= 1
+                    print(how_nj_left)
+                driver.quit()
+                mask1 = (sch3['hmo_name'] == 'UNITEDHEALTHCARE') & (sch3['Primary Ins'].str.contains('UHC|United'))
+                sch3.loc[mask1, 'Primary Ins'] = 'UnitedHealthcare Community Plan'
+                mask2 = (sch3['hmo_name'] == 'UNITEDHEALTHCARE DUAL COMPLETE ONE (HMO SNP)') & (
+                    sch3['Primary Ins'].str.contains('UHC|United'))
+                sch3.loc[mask2, 'Primary Ins'] = 'United HealthCare of all states'
+                sch3['hmo_name'] = sch3['hmo_name'].map(hmo_dict).fillna('')
+                sch3['documented'] = False
+                Culprit()
+                Culprit()
+                precheckers(sch3)
+                sch3.to_csv("CALLING_LIST.csv", index=False)
+                os.rename("CALLING_LIST.csv",
+                          f'C:\\Users\\{user_name}\\OneDrive\\Documents\\OLD FILES\\CSV FILES DAILY\\CALLING_LIST_{listdate}.csv')
+                driver.quit()
+                break
+            except:
+                driver = webdriver.Chrome(options=chrome_options,
+                                          service=Service(f'C:\\Users\\{user_name}\\Downloads\\chromedriver.exe'))
+                driver.maximize_window()
+                driver.implicitly_wait(10)
+                driver.get("https://emr_link/ProviderLogin.action")
+                driver.find_element(By.NAME, "username").send_keys('your_username')
+                driver.find_element(By.NAME, "password").send_keys('your_password')
+                driver.find_element(By.NAME, "password").send_keys(Keys.ENTER)
+
+# %% debugging
+# sch3 = pd.read_csv("C:\\Users\\abdok\\OneDrive\\Documents\\OLD FILES\\CSV FILES DAILY\\CALLING_LIST_04-11-2024.csv")
+# sch3['DateFull'] = pd.to_datetime(sch3['DateFull'])
+# hmo_dict = {
+#         'HORIZON NJ HEALTH': 'Horizon New Jersey Health',
+#         'WELLPOINT NEW JERSEY INC. FORMERLY AMERIGROUP NJ': 'Wellpoint',
+#         'UNITEDHEALTHCARE': 'UnitedHealthcare Community Plan',
+#         'AETNA BETTER HEALTH OF NEW JERSEY': 'Aetna Better Health of New Jersey',
+#         'FIDELIS CARE FORMERLY WELLCARE': 'Wellcare of New Jersey',
+#         'UNITEDHEALTHCARE DUAL COMPLETE ONE (HMO SNP)': 'United HealthCare of all states',
+#         'AETNA ASSURE PREMIER PLUS (HMO SNP)': 'Aetna Better Health of New Jersey',
+#         'HORIZON NJ TOTALCARE (HMO SNP)': 'Horizon New Jersey Health',
+#         'WELLCARE LIBERTY (HMO SNP)': 'Wellcare of New Jersey',
+#         'AMERIVANTAGE DUAL COORDINATION (HMO SNP)': 'Amerigroup New Jersey'
+#     }
+# payer_dict = {
+#         'Horizon New Jersey Health': 'Horizon NJ Health',
+#         'Wellcare of New Jersey': 'WellCare',
+#         'UnitedHealthcare Community Plan': 'United Medicaid',
+#         'Amerigroup New Jersey': 'Amerigroup',
+#         'Aetna Better Health of New Jersey': 'Aetna Medicaid',
+#         'UHC Community Plan New Jersey': 'United Medicaid'
+#     }
+# listdate1 = sch3['ApptDate'].value_counts().index[0]
+# listdate = listdate1.replace('/', '-')
+# sch3['lastvisit2'] = pd.to_datetime(sch3['lastvisti'])
+# sch3['BW_REQ_DATE'] = pd.to_datetime(sch3['BW_REQ_DATE'])
+# sch3['BW_REPORT_DATE'] = pd.to_datetime(sch3['BW_REPORT_DATE'])
+# sch3['pt_info_date'] = pd.to_datetime(sch3['pt_info_date'])
+# sch3['Date Pres2'] = pd.to_datetime(sch3['Date Pres'])
+# sch3 = sch3.fillna('')
+# sch3[sch3['PTNTACCT'] == '17696150']['BW_REQ']
+# sch5 = sch3[sch3['PTNTACCT'] == '17696150'][['PTNTACCT', 'done', 'DateFull']]
+
+
