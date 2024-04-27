@@ -434,7 +434,7 @@ def send_email1(filename, ATT):
     msg = EmailMessage()
     msg['Subject'] = ATT
     msg['From'] = 'your_email'
-    msg['To'] = 'dkdermvoice@gmail.com'
+    msg['To'] = 'receiver_email'
     msg.set_content('FACE SHEETS')
     with open(filename, 'rb') as f:
         file_data = f.read()
